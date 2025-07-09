@@ -9,7 +9,7 @@ import soundfile as sf
 import librosa
 import numpy as np
 from pathlib import Path
-from typing import Optional, Dict, Any, Generator, Tuple
+from typing import Optional, Dict, Any, Generator, Tuple, List
 from chatterbox.tts import ChatterboxTTS
 
 # Configure logging
@@ -55,8 +55,36 @@ def base64_to_audio(base64_string):
     audio_data, sample_rate = sf.read(audio_buffer)
     return audio_data, sample_rate
 
-def generate_tts(job_input: Dict[str, Any]) -> Dict[str, Any]:
-    """Generate text-to-speech audio with basic parameters"""
+def process_audio_tensor(wav_tensor, sample_rate_target=None, audio_normalization=None):
+    """Process audio tensor to numpy array with optional resampling and normalization"""
+    # Convert tensor to numpy for processing
+    if torch.is_tensor(wav_tensor):
+        wav_numpy = wav_tensor.detach().cpu().numpy()
+    else:
+        wav_numpy = wav_tensor
+    
+    # Ensure audio is in correct shape (flatten if needed)
+    if wav_numpy.ndim > 1:
+        wav_numpy = wav_numpy.flatten()
+    
+    # Get model sample rate
+    model_sr = getattr(tts_model, 'sr', 24000)
+    
+    # Resample if different sample rate requested
+    if sample_rate_target and sample_rate_target != model_sr:
+        wav_numpy = librosa.resample(wav_numpy, orig_sr=model_sr, target_sr=sample_rate_target)
+    
+    # Apply audio normalization if specified
+    if audio_normalization == 'peak':
+        wav_numpy = wav_numpy / np.max(np.abs(wav_numpy))
+    elif audio_normalization == 'rms':
+        rms = np.sqrt(np.mean(wav_numpy**2))
+        wav_numpy = wav_numpy / rms * 0.1
+    
+    return wav_numpy
+
+def generate_basic_tts(job_input: Dict[str, Any]) -> Dict[str, Any]:
+    """Generate basic TTS as shown in GitHub documentation"""
     try:
         # Extract and validate text
         text = job_input.get('text', 'Hello, this is a test.')
@@ -65,77 +93,22 @@ def generate_tts(job_input: Dict[str, Any]) -> Dict[str, Any]:
         if len(text) > 5000:
             raise ValueError("Text too long (max 5000 characters)")
         
-        # Basic synthesis parameters (using correct parameter names)
-        exaggeration = job_input.get('exaggeration', 0.5)
-        cfg_weight = job_input.get('cfg_weight', job_input.get('cfg', 0.5))  # Support both names
-        temperature = job_input.get('temperature', 0.8)
-        seed = job_input.get('seed', job_input.get('random_seed', None))
-        
-        # Voice parameters
-        voice_mode = job_input.get('voice_mode', 'predefined')
-        reference_audio_b64 = job_input.get('reference_audio', None)
-        max_reference_duration_sec = job_input.get('max_reference_duration_sec', 30)
-        
-        # Audio output parameters
-        output_format = job_input.get('output_format', 'wav')
+        # Basic parameters (minimal as per GitHub docs)
         sample_rate = job_input.get('sample_rate', None)
         audio_normalization = job_input.get('audio_normalization', None)
         
-        # Validate core parameters
-        if not 0.0 <= exaggeration <= 1.0:
-            raise ValueError("Exaggeration must be between 0.0 and 1.0")
-        if not 0.0 <= cfg_weight <= 1.0:
-            raise ValueError("CFG weight must be between 0.0 and 1.0")
-        if not 0.1 <= temperature <= 2.0:
-            raise ValueError("Temperature must be between 0.1 and 2.0")
-        if seed is not None and not isinstance(seed, int):
-            raise ValueError("Seed must be an integer")
+        # Voice cloning support
+        reference_audio_b64 = job_input.get('reference_audio', None)
+        max_reference_duration_sec = job_input.get('max_reference_duration_sec', 30)
         
-        # Validate voice parameters
-        if voice_mode not in ['predefined', 'clone']:
-            raise ValueError("Voice mode must be 'predefined' or 'clone'")
-        if voice_mode == 'clone' and not reference_audio_b64:
-            raise ValueError("Reference audio required for voice cloning")
-        if not 1 <= max_reference_duration_sec <= 60:
-            raise ValueError("Max reference duration must be between 1 and 60 seconds")
+        logger.info(f"Basic TTS request - Text: {len(text)} chars")
         
-        # Validate audio parameters
-        if output_format not in ['wav', 'opus', 'mp3']:
-            raise ValueError("Output format must be 'wav', 'opus', or 'mp3'")
-        if sample_rate is not None and sample_rate not in [16000, 22050, 24000, 44100, 48000]:
-            raise ValueError("Sample rate must be 16000, 22050, 24000, 44100, or 48000")
-        
-        # Validate streaming parameters
-        chunk_size = job_input.get('chunk_size', 25)
-        context_window = job_input.get('context_window', 50)
-        fade_duration = job_input.get('fade_duration', 0.02)
-        
-        if not isinstance(chunk_size, int) or chunk_size < 1:
-            raise ValueError("Chunk size must be a positive integer")
-        if not isinstance(context_window, int) or context_window < 1:
-            raise ValueError("Context window must be a positive integer")
-        if not isinstance(fade_duration, (int, float)) or fade_duration < 0:
-            raise ValueError("Fade duration must be a non-negative number")
-        
-        logger.info(f"TTS request - Text: {len(text)} chars, Mode: {voice_mode}, Exaggeration: {exaggeration}")
-        
-        # Prepare generation parameters (using correct streaming API parameter names)
-        generation_params = {
-            'text': text,
-            'exaggeration': exaggeration,
-            'cfg_weight': cfg_weight,  # Streaming API uses cfg_weight, not cfg
-            'temperature': temperature,
-            'chunk_size': chunk_size,  # tokens per chunk
-            'context_window': context_window,  # context window for each chunk
-            'fade_duration': fade_duration,  # fade-in duration for each chunk
-            'print_metrics': job_input.get('print_metrics', True)
-        }
-        
-        # Note: The streaming API doesn't support seed parameter
+        # Prepare generation parameters (minimal as per GitHub docs)
+        generation_params = {'text': text}
         
         # Handle voice cloning
         temp_ref_path = None
-        if voice_mode == 'clone' and reference_audio_b64:
+        if reference_audio_b64:
             # Decode reference audio
             reference_audio, ref_sr = base64_to_audio(reference_audio_b64)
             
@@ -150,24 +123,10 @@ def generate_tts(job_input: Dict[str, Any]) -> Dict[str, Any]:
             sf.write(temp_ref_path, reference_audio, ref_sr)
             generation_params['audio_prompt_path'] = temp_ref_path
         
-        # Generate speech using regular (non-streaming) API for testing
-        logger.info("Starting regular TTS generation...")
-        
-        # Use basic parameters for regular generation
-        basic_params = {
-            'text': text,
-            'exaggeration': exaggeration,
-            'cfg_weight': cfg_weight,
-            'temperature': temperature,
-        }
-        
-        # Add voice cloning if specified
-        if temp_ref_path:
-            basic_params['audio_prompt_path'] = temp_ref_path
-        
-        # Generate audio using regular generate method
-        wav = tts_model.generate(**basic_params)
-        logger.info(f"Regular TTS generation complete - shape: {wav.shape}")
+        # Generate audio using basic method
+        logger.info("Starting basic TTS generation...")
+        wav = tts_model.generate(**generation_params)
+        logger.info(f"Basic TTS generation complete - shape: {wav.shape}")
         
         # Clean up temporary file
         if temp_ref_path:
@@ -176,29 +135,9 @@ def generate_tts(job_input: Dict[str, Any]) -> Dict[str, Any]:
             except:
                 pass
         
-        # Get model sample rate
+        # Process audio
         output_sr = sample_rate if sample_rate else getattr(tts_model, 'sr', 24000)
-        
-        # Convert tensor to numpy for processing
-        if torch.is_tensor(wav):
-            wav_numpy = wav.detach().cpu().numpy()
-        else:
-            wav_numpy = wav
-        
-        # Ensure audio is in correct shape (flatten if needed)
-        if wav_numpy.ndim > 1:
-            wav_numpy = wav_numpy.flatten()
-        
-        # Resample if different sample rate requested
-        if sample_rate and sample_rate != getattr(tts_model, 'sr', 24000):
-            wav_numpy = librosa.resample(wav_numpy, orig_sr=getattr(tts_model, 'sr', 24000), target_sr=sample_rate)
-        
-        # Apply audio normalization if specified
-        if audio_normalization == 'peak':
-            wav_numpy = wav_numpy / np.max(np.abs(wav_numpy))
-        elif audio_normalization == 'rms':
-            rms = np.sqrt(np.mean(wav_numpy**2))
-            wav_numpy = wav_numpy / rms * 0.1
+        wav_numpy = process_audio_tensor(wav, output_sr, audio_normalization)
         
         # Convert to base64
         audio_base64 = audio_to_base64(wav_numpy, output_sr)
@@ -208,23 +147,313 @@ def generate_tts(job_input: Dict[str, Any]) -> Dict[str, Any]:
             "audio": audio_base64,
             "sample_rate": output_sr,
             "text": text,
+            "mode": "basic",
             "parameters": {
-                "exaggeration": exaggeration,
-                "cfg_weight": cfg_weight,
-                "temperature": temperature,
-                "voice_mode": voice_mode,
-                "chunk_size": generation_params['chunk_size'],
-                "context_window": generation_params['context_window'],
-                "fade_duration": generation_params['fade_duration']
+                "voice_cloning": reference_audio_b64 is not None
             }
         }
         
-        logger.info(f"TTS generation successful - Duration: {len(wav_numpy) / output_sr:.2f}s")
+        logger.info(f"Basic TTS generation successful - Duration: {len(wav_numpy) / output_sr:.2f}s")
         return response
         
     except Exception as e:
-        logger.error(f"TTS generation failed: {e}")
-        raise RuntimeError(f"TTS generation failed: {str(e)}")
+        logger.error(f"Basic TTS generation failed: {e}")
+        raise RuntimeError(f"Basic TTS generation failed: {str(e)}")
+
+def generate_streaming_tts(job_input: Dict[str, Any]) -> Dict[str, Any]:
+    """Generate streaming TTS as shown in GitHub documentation"""
+    try:
+        # Extract and validate text
+        text = job_input.get('text', 'Hello, this is a test.')
+        if not text or len(text.strip()) == 0:
+            raise ValueError("Text cannot be empty")
+        if len(text) > 5000:
+            raise ValueError("Text too long (max 5000 characters)")
+        
+        # Streaming parameters
+        chunk_size = job_input.get('chunk_size', 50)  # Default from GitHub docs
+        exaggeration = job_input.get('exaggeration', 0.5)
+        cfg_weight = job_input.get('cfg_weight', job_input.get('cfg', 0.5))
+        temperature = job_input.get('temperature', 0.8)
+        print_metrics = job_input.get('print_metrics', True)
+        
+        # Audio output parameters
+        sample_rate = job_input.get('sample_rate', None)
+        audio_normalization = job_input.get('audio_normalization', None)
+        
+        # Voice cloning support
+        reference_audio_b64 = job_input.get('reference_audio', None)
+        max_reference_duration_sec = job_input.get('max_reference_duration_sec', 30)
+        
+        # Validate parameters
+        if not isinstance(chunk_size, int) or chunk_size < 1:
+            raise ValueError("Chunk size must be a positive integer")
+        if not 0.0 <= exaggeration <= 1.0:
+            raise ValueError("Exaggeration must be between 0.0 and 1.0")
+        if not 0.0 <= cfg_weight <= 1.0:
+            raise ValueError("CFG weight must be between 0.0 and 1.0")
+        if not 0.1 <= temperature <= 2.0:
+            raise ValueError("Temperature must be between 0.1 and 2.0")
+        
+        logger.info(f"Streaming TTS request - Text: {len(text)} chars, Chunk size: {chunk_size}")
+        
+        # Prepare generation parameters
+        generation_params = {
+            'text': text,
+            'chunk_size': chunk_size,
+            'exaggeration': exaggeration,
+            'cfg_weight': cfg_weight,
+            'temperature': temperature,
+            'print_metrics': print_metrics
+        }
+        
+        # Handle voice cloning
+        temp_ref_path = None
+        if reference_audio_b64:
+            # Decode reference audio
+            reference_audio, ref_sr = base64_to_audio(reference_audio_b64)
+            
+            # Trim to max duration
+            max_samples = int(max_reference_duration_sec * ref_sr)
+            if len(reference_audio) > max_samples:
+                reference_audio = reference_audio[:max_samples]
+                logger.info(f"Trimmed reference audio to {max_reference_duration_sec} seconds")
+            
+            # Save temporarily for model usage
+            temp_ref_path = tempfile.mktemp(suffix='.wav')
+            sf.write(temp_ref_path, reference_audio, ref_sr)
+            generation_params['audio_prompt_path'] = temp_ref_path
+        
+        # Generate audio using streaming method
+        logger.info("Starting streaming TTS generation...")
+        audio_chunks = []
+        chunk_metrics = []
+        
+        start_time = time.time()
+        first_chunk_time = None
+        
+        for audio_chunk, metrics in tts_model.generate_stream(**generation_params):
+            if first_chunk_time is None:
+                first_chunk_time = time.time() - start_time
+            
+            audio_chunks.append(audio_chunk)
+            
+            # Collect metrics
+            chunk_info = {
+                'chunk_count': metrics.chunk_count,
+                'rtf': metrics.rtf if hasattr(metrics, 'rtf') and metrics.rtf else None,
+                'chunk_shape': list(audio_chunk.shape) if hasattr(audio_chunk, 'shape') else None
+            }
+            chunk_metrics.append(chunk_info)
+            
+            logger.info(f"Generated chunk {metrics.chunk_count}, RTF: {metrics.rtf:.3f}" if hasattr(metrics, 'rtf') and metrics.rtf else f"Chunk {metrics.chunk_count}")
+        
+        # Combine all chunks into final audio
+        final_audio = torch.cat(audio_chunks, dim=-1)
+        total_time = time.time() - start_time
+        
+        logger.info(f"Streaming TTS generation complete - Total chunks: {len(audio_chunks)}, Total time: {total_time:.3f}s")
+        
+        # Clean up temporary file
+        if temp_ref_path:
+            try:
+                Path(temp_ref_path).unlink()
+            except:
+                pass
+        
+        # Process audio
+        output_sr = sample_rate if sample_rate else getattr(tts_model, 'sr', 24000)
+        wav_numpy = process_audio_tensor(final_audio, output_sr, audio_normalization)
+        
+        # Convert to base64
+        audio_base64 = audio_to_base64(wav_numpy, output_sr)
+        
+        # Prepare response
+        response = {
+            "audio": audio_base64,
+            "sample_rate": output_sr,
+            "text": text,
+            "mode": "streaming",
+            "parameters": {
+                "chunk_size": chunk_size,
+                "exaggeration": exaggeration,
+                "cfg_weight": cfg_weight,
+                "temperature": temperature,
+                "voice_cloning": reference_audio_b64 is not None
+            },
+            "streaming_metrics": {
+                "total_chunks": len(audio_chunks),
+                "first_chunk_latency": first_chunk_time,
+                "total_generation_time": total_time,
+                "audio_duration": len(wav_numpy) / output_sr,
+                "rtf": total_time / (len(wav_numpy) / output_sr) if len(wav_numpy) > 0 else None,
+                "chunk_details": chunk_metrics
+            }
+        }
+        
+        logger.info(f"Streaming TTS generation successful - Duration: {len(wav_numpy) / output_sr:.2f}s")
+        return response
+        
+    except Exception as e:
+        logger.error(f"Streaming TTS generation failed: {e}")
+        raise RuntimeError(f"Streaming TTS generation failed: {str(e)}")
+
+def generate_streaming_voice_cloning_tts(job_input: Dict[str, Any]) -> Dict[str, Any]:
+    """Generate streaming TTS with voice cloning as shown in GitHub documentation"""
+    try:
+        # Extract and validate text
+        text = job_input.get('text', 'Hello, this is a test.')
+        if not text or len(text.strip()) == 0:
+            raise ValueError("Text cannot be empty")
+        if len(text) > 5000:
+            raise ValueError("Text too long (max 5000 characters)")
+        
+        # Streaming parameters (with GitHub defaults)
+        chunk_size = job_input.get('chunk_size', 25)  # Smaller chunks for lower latency as per docs
+        exaggeration = job_input.get('exaggeration', 0.7)  # Default from GitHub example
+        cfg_weight = job_input.get('cfg_weight', job_input.get('cfg', 0.3))  # Default from GitHub example
+        temperature = job_input.get('temperature', 0.8)
+        print_metrics = job_input.get('print_metrics', True)
+        
+        # Audio output parameters
+        sample_rate = job_input.get('sample_rate', None)
+        audio_normalization = job_input.get('audio_normalization', None)
+        
+        # Voice cloning - required for this mode
+        reference_audio_b64 = job_input.get('reference_audio', None)
+        max_reference_duration_sec = job_input.get('max_reference_duration_sec', 30)
+        
+        if not reference_audio_b64:
+            raise ValueError("Reference audio is required for streaming voice cloning mode")
+        
+        # Validate parameters
+        if not isinstance(chunk_size, int) or chunk_size < 1:
+            raise ValueError("Chunk size must be a positive integer")
+        if not 0.0 <= exaggeration <= 1.0:
+            raise ValueError("Exaggeration must be between 0.0 and 1.0")
+        if not 0.0 <= cfg_weight <= 1.0:
+            raise ValueError("CFG weight must be between 0.0 and 1.0")
+        if not 0.1 <= temperature <= 2.0:
+            raise ValueError("Temperature must be between 0.1 and 2.0")
+        
+        logger.info(f"Streaming Voice Cloning TTS request - Text: {len(text)} chars, Chunk size: {chunk_size}")
+        
+        # Handle voice cloning - required for this mode
+        # Decode reference audio
+        reference_audio, ref_sr = base64_to_audio(reference_audio_b64)
+        
+        # Trim to max duration
+        max_samples = int(max_reference_duration_sec * ref_sr)
+        if len(reference_audio) > max_samples:
+            reference_audio = reference_audio[:max_samples]
+            logger.info(f"Trimmed reference audio to {max_reference_duration_sec} seconds")
+        
+        # Save temporarily for model usage
+        temp_ref_path = tempfile.mktemp(suffix='.wav')
+        sf.write(temp_ref_path, reference_audio, ref_sr)
+        
+        # Prepare generation parameters (as per GitHub docs)
+        generation_params = {
+            'text': text,
+            'audio_prompt_path': temp_ref_path,
+            'exaggeration': exaggeration,
+            'cfg_weight': cfg_weight,
+            'chunk_size': chunk_size,
+            'print_metrics': print_metrics
+        }
+        
+        # Generate audio using streaming method with voice cloning
+        logger.info("Starting streaming TTS generation with voice cloning...")
+        audio_chunks = []
+        chunk_metrics = []
+        
+        start_time = time.time()
+        first_chunk_time = None
+        
+        for audio_chunk, metrics in tts_model.generate_stream(**generation_params):
+            if first_chunk_time is None:
+                first_chunk_time = time.time() - start_time
+            
+            audio_chunks.append(audio_chunk)
+            
+            # Collect metrics
+            chunk_info = {
+                'chunk_count': metrics.chunk_count,
+                'rtf': metrics.rtf if hasattr(metrics, 'rtf') and metrics.rtf else None,
+                'chunk_shape': list(audio_chunk.shape) if hasattr(audio_chunk, 'shape') else None,
+                'latency_to_first_chunk': metrics.latency_to_first_chunk if hasattr(metrics, 'latency_to_first_chunk') else None
+            }
+            chunk_metrics.append(chunk_info)
+            
+            # Log first chunk latency if available
+            if hasattr(metrics, 'latency_to_first_chunk') and metrics.latency_to_first_chunk:
+                logger.info(f"First chunk latency: {metrics.latency_to_first_chunk:.3f}s")
+            
+            logger.info(f"Generated chunk {metrics.chunk_count}, RTF: {metrics.rtf:.3f}" if hasattr(metrics, 'rtf') and metrics.rtf else f"Chunk {metrics.chunk_count}")
+        
+        # Combine all chunks into final audio
+        final_audio = torch.cat(audio_chunks, dim=-1)
+        total_time = time.time() - start_time
+        
+        logger.info(f"Streaming voice cloning TTS generation complete - Total chunks: {len(audio_chunks)}, Total time: {total_time:.3f}s")
+        
+        # Clean up temporary file
+        try:
+            Path(temp_ref_path).unlink()
+        except:
+            pass
+        
+        # Process audio
+        output_sr = sample_rate if sample_rate else getattr(tts_model, 'sr', 24000)
+        wav_numpy = process_audio_tensor(final_audio, output_sr, audio_normalization)
+        
+        # Convert to base64
+        audio_base64 = audio_to_base64(wav_numpy, output_sr)
+        
+        # Prepare response
+        response = {
+            "audio": audio_base64,
+            "sample_rate": output_sr,
+            "text": text,
+            "mode": "streaming_voice_cloning",
+            "parameters": {
+                "chunk_size": chunk_size,
+                "exaggeration": exaggeration,
+                "cfg_weight": cfg_weight,
+                "temperature": temperature,
+                "voice_cloning": True
+            },
+            "streaming_metrics": {
+                "total_chunks": len(audio_chunks),
+                "first_chunk_latency": first_chunk_time,
+                "total_generation_time": total_time,
+                "audio_duration": len(wav_numpy) / output_sr,
+                "rtf": total_time / (len(wav_numpy) / output_sr) if len(wav_numpy) > 0 else None,
+                "chunk_details": chunk_metrics
+            }
+        }
+        
+        logger.info(f"Streaming voice cloning TTS generation successful - Duration: {len(wav_numpy) / output_sr:.2f}s")
+        return response
+        
+    except Exception as e:
+        logger.error(f"Streaming voice cloning TTS generation failed: {e}")
+        raise RuntimeError(f"Streaming voice cloning TTS generation failed: {str(e)}")
+
+
+
+def generate_tts(job_input: Dict[str, Any]) -> Dict[str, Any]:
+    """Route to appropriate TTS generation method based on mode"""
+    mode = job_input.get('mode', 'basic')
+    
+    if mode == 'basic':
+        return generate_basic_tts(job_input)
+    elif mode == 'streaming':
+        return generate_streaming_tts(job_input)
+    elif mode == 'streaming_voice_cloning':
+        return generate_streaming_voice_cloning_tts(job_input)
+    else:
+        raise ValueError(f"Unknown mode: {mode}. Must be 'basic', 'streaming', or 'streaming_voice_cloning'")
 
 def handler(job):
     """Main handler function for Runpod"""

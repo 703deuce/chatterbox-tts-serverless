@@ -23,13 +23,15 @@ RUN apt-get update && apt-get install -y \
 # Set work directory
 WORKDIR /app
 
-# Copy requirements and install Python dependencies
-COPY requirements.txt .
+# Upgrade pip first
 RUN pip3 install --no-cache-dir --upgrade pip
-RUN pip3 install --no-cache-dir -r requirements.txt
 
-# Install PyTorch with CUDA support
+# Install PyTorch with CUDA support first
 RUN pip3 install --no-cache-dir torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
+
+# Copy requirements and install other Python dependencies
+COPY requirements.txt .
+RUN pip3 install --no-cache-dir -r requirements.txt
 
 # Copy the handler script
 COPY handler.py .

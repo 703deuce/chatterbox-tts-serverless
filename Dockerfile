@@ -1,40 +1,43 @@
-# Use CUDA-enabled Python base image
+# Use NVIDIA CUDA base image
 FROM nvidia/cuda:11.8.0-devel-ubuntu22.04
 
 # Set environment variables
 ENV DEBIAN_FRONTEND=noninteractive
 ENV PYTHONUNBUFFERED=1
-ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONPATH="/workspace"
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
     python3 \
     python3-pip \
     python3-dev \
-    build-essential \
     git \
     wget \
     curl \
+    build-essential \
+    pkg-config \
     libsndfile1 \
     libsndfile1-dev \
     ffmpeg \
     && rm -rf /var/lib/apt/lists/*
 
-# Set work directory
-WORKDIR /app
+# Set working directory
+WORKDIR /workspace
 
-# Upgrade pip first
-RUN pip3 install --no-cache-dir --upgrade pip
+# Install PyTorch with CUDA support first (to avoid conflicts)
+RUN pip install torch==2.0.1 torchvision==0.15.2 torchaudio==2.0.2 --index-url https://download.pytorch.org/whl/cu118
 
-# Copy requirements and install all dependencies (let chatterbox-tts handle PyTorch)
+# Copy requirements file
 COPY requirements.txt .
-RUN pip3 install --no-cache-dir -r requirements.txt
 
-# Copy handler code
-COPY handler.py .
+# Install Python dependencies
+RUN pip install -r requirements.txt
 
-# Expose port for the serverless handler
+# Copy application code
+COPY . .
+
+# Expose port
 EXPOSE 8000
 
 # Run the handler
-CMD ["python3", "handler.py"] 
+CMD ["python", "-u", "handler.py"] 

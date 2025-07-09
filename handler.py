@@ -9,7 +9,7 @@ import librosa
 import numpy as np
 from pathlib import Path
 from typing import Optional, Dict, Any
-from chatterbox.tts import ChatterboxTTS
+from chatterbox_streaming.tts import ChatterboxTTS
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)

@@ -16,14 +16,18 @@ def test_sync():
         "Content-Type": "application/json"
     }
     
-    # Simple test payload with correct parameter names
+    # Simple test payload with correct streaming API parameter names
     payload = {
         "input": {
             "operation": "tts",
-            "text": "Hello! This is a sync test with the corrected cfg_weight parameter.",
+            "text": "Hello! This is a sync test with the streaming ChatterboxTTS API. The real-time streaming delivers audio chunks progressively for better performance.",
             "exaggeration": 0.5,
             "cfg_weight": 0.7,
-            "temperature": 0.8
+            "temperature": 0.8,
+            "chunk_size": 25,
+            "context_window": 50,
+            "fade_duration": 0.02,
+            "print_metrics": True
         }
     }
     

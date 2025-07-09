@@ -4,12 +4,13 @@ import tempfile
 import base64
 import io
 import logging
+import time
 import soundfile as sf
 import librosa
 import numpy as np
 from pathlib import Path
-from typing import Optional, Dict, Any
-from chatterbox_streaming.tts import ChatterboxTTS
+from typing import Optional, Dict, Any, Generator, Tuple
+from chatterbox.tts import ChatterboxTTS
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -17,7 +18,13 @@ logger = logging.getLogger(__name__)
 
 # Global model variables
 tts_model: Optional[ChatterboxTTS] = None
-device = "cuda" if torch.cuda.is_available() else "cpu"
+# Automatically detect the best available device
+if torch.cuda.is_available():
+    device = "cuda"
+elif torch.backends.mps.is_available():
+    device = "mps"
+else:
+    device = "cpu"
 
 def load_models():
     """Load TTS model on startup"""
@@ -61,7 +68,7 @@ def generate_tts(job_input: Dict[str, Any]) -> Dict[str, Any]:
         # Basic synthesis parameters (using correct parameter names)
         exaggeration = job_input.get('exaggeration', 0.5)
         cfg_weight = job_input.get('cfg_weight', job_input.get('cfg', 0.5))  # Support both names
-        temperature = job_input.get('temperature', 0.7)
+        temperature = job_input.get('temperature', 0.8)
         seed = job_input.get('seed', job_input.get('random_seed', None))
         
         # Voice parameters
@@ -98,19 +105,33 @@ def generate_tts(job_input: Dict[str, Any]) -> Dict[str, Any]:
         if sample_rate is not None and sample_rate not in [16000, 22050, 24000, 44100, 48000]:
             raise ValueError("Sample rate must be 16000, 22050, 24000, 44100, or 48000")
         
+        # Validate streaming parameters
+        chunk_size = job_input.get('chunk_size', 25)
+        context_window = job_input.get('context_window', 50)
+        fade_duration = job_input.get('fade_duration', 0.02)
+        
+        if not isinstance(chunk_size, int) or chunk_size < 1:
+            raise ValueError("Chunk size must be a positive integer")
+        if not isinstance(context_window, int) or context_window < 1:
+            raise ValueError("Context window must be a positive integer")
+        if not isinstance(fade_duration, (int, float)) or fade_duration < 0:
+            raise ValueError("Fade duration must be a non-negative number")
+        
         logger.info(f"TTS request - Text: {len(text)} chars, Mode: {voice_mode}, Exaggeration: {exaggeration}")
         
-        # Prepare generation parameters (using correct parameter names)
+        # Prepare generation parameters (using correct streaming API parameter names)
         generation_params = {
             'text': text,
             'exaggeration': exaggeration,
-            'cfg': cfg_weight,
-            'temperature': temperature
+            'cfg_weight': cfg_weight,  # Streaming API uses cfg_weight, not cfg
+            'temperature': temperature,
+            'chunk_size': chunk_size,  # tokens per chunk
+            'context_window': context_window,  # context window for each chunk
+            'fade_duration': fade_duration,  # fade-in duration for each chunk
+            'print_metrics': job_input.get('print_metrics', True)
         }
         
-        # Add seed if specified
-        if seed is not None:
-            generation_params['seed'] = seed
+        # Note: The streaming API doesn't support seed parameter
         
         # Handle voice cloning
         temp_ref_path = None
@@ -129,8 +150,28 @@ def generate_tts(job_input: Dict[str, Any]) -> Dict[str, Any]:
             sf.write(temp_ref_path, reference_audio, ref_sr)
             generation_params['audio_prompt_path'] = temp_ref_path
         
-        # Generate speech
-        wav = tts_model.generate(**generation_params)
+        # Generate speech using streaming API
+        streamed_chunks = []
+        chunk_count = 0
+        
+        logger.info("Starting streaming TTS generation...")
+        for audio_chunk, metrics in tts_model.generate_stream(**generation_params):
+            chunk_count += 1
+            streamed_chunks.append(audio_chunk)
+            
+            if chunk_count == 1:
+                logger.info(f"First chunk received - shape: {audio_chunk.shape}")
+            
+            # Log metrics if available
+            if metrics and job_input.get('print_metrics', False):
+                logger.info(f"Chunk {chunk_count} metrics: {metrics}")
+        
+        # Concatenate all streaming chunks
+        if streamed_chunks:
+            wav = torch.cat(streamed_chunks, dim=-1)
+            logger.info(f"Streaming complete - {chunk_count} chunks, final shape: {wav.shape}")
+        else:
+            raise RuntimeError("No audio chunks generated from streaming API")
         
         # Clean up temporary file
         if temp_ref_path:
@@ -165,8 +206,10 @@ def generate_tts(job_input: Dict[str, Any]) -> Dict[str, Any]:
                 "exaggeration": exaggeration,
                 "cfg_weight": cfg_weight,
                 "temperature": temperature,
-                "seed": seed,
-                "voice_mode": voice_mode
+                "voice_mode": voice_mode,
+                "chunk_size": generation_params['chunk_size'],
+                "context_window": generation_params['context_window'],
+                "fade_duration": generation_params['fade_duration']
             }
         }
         

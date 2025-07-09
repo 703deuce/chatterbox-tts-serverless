@@ -23,9 +23,14 @@ The streaming version provides:
 ### Core Parameters
 - `text` (required): Text to convert to speech
 - `exaggeration` (0.0-1.0): Emotion exaggeration level (default: 0.5)
-- `cfg` (0.0-1.0): CFG weight for generation control (default: 0.5) 
-- `temperature` (0.1-2.0): Temperature for generation (default: 0.7)
-- `seed` (int): Random seed for reproducibility
+- `cfg_weight` (0.0-1.0): CFG weight for generation control (default: 0.5) 
+- `temperature` (0.1-2.0): Temperature for generation (default: 0.8)
+
+### Streaming Parameters
+- `chunk_size` (int): Tokens per chunk for streaming (default: 25)
+- `context_window` (int): Context window for each chunk (default: 50)
+- `fade_duration` (float): Fade-in duration for each chunk in seconds (default: 0.02)
+- `print_metrics` (bool): Print streaming metrics (default: true)
 
 ### Voice Parameters
 - `voice_mode`: "predefined" or "clone"
@@ -46,8 +51,11 @@ payload = {
         "operation": "tts",
         "text": "Hello! This is ChatterboxTTS with streaming capabilities.",
         "exaggeration": 0.5,
-        "cfg": 0.5,
-        "temperature": 0.7
+        "cfg_weight": 0.5,
+        "temperature": 0.8,
+        "chunk_size": 25,
+        "context_window": 50,
+        "fade_duration": 0.02
     }
 }
 ```
@@ -61,7 +69,10 @@ payload = {
         "voice_mode": "clone",
         "reference_audio": "base64_encoded_audio_data",
         "exaggeration": 0.7,
-        "cfg": 0.3
+        "cfg_weight": 0.3,
+        "chunk_size": 20,
+        "context_window": 40,
+        "fade_duration": 0.015
     }
 }
 ```
@@ -86,16 +97,25 @@ payload = {
 ## Technical Details
 
 ### Dependencies
-- **ChatterboxTTS Streaming**: Real-time TTS with streaming support
-- **PyTorch**: GPU-accelerated tensor operations
+- **chatterbox-tts**: Real-time TTS with streaming support (installed from chatterbox-streaming repo)
+- **PyTorch 2.6.0**: GPU-accelerated tensor operations (auto-managed)
 - **RunPod SDK**: Serverless infrastructure integration
 - **Audio Processing**: soundfile, librosa for audio handling
+- **ML Dependencies**: transformers, accelerate, huggingface-hub (auto-managed)
 
 ### Performance Optimizations
 - Streaming generation for reduced latency
 - GPU memory management
 - Efficient audio processing pipeline
 - Optimized Docker image with CUDA support
+
+### Dependency Management
+- **PyTorch 2.6.0**: Automatically managed by chatterbox-streaming
+- **Core ML Libraries**: numpy, transformers, torch automatically handled by chatterbox-streaming
+- **CUDA Support**: Compatible with NVIDIA GPUs via PyTorch CUDA wheels
+- **No Version Conflicts**: Dependencies are resolved by chatterbox-streaming
+
+⚠️ **Important**: Do NOT manually pin versions for: `torch`, `torchvision`, `torchaudio`, `transformers`, `numpy` in requirements.txt. Let chatterbox-streaming manage these to avoid conflicts.
 
 ## Error Handling
 

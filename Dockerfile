@@ -24,13 +24,12 @@ RUN apt-get update && apt-get install -y \
 # Set working directory
 WORKDIR /workspace
 
-# Install PyTorch with CUDA support first (to avoid conflicts)
-RUN pip install torch==2.0.1 torchvision==0.15.2 torchaudio==2.0.2 --index-url https://download.pytorch.org/whl/cu118
+# Note: PyTorch will be installed by chatterbox-streaming with correct versions (torch==2.6.0)
 
 # Copy requirements file
 COPY requirements.txt .
 
-# Install Python dependencies
+# Install Python dependencies (chatterbox-streaming will handle PyTorch 2.6.0 + CUDA)
 RUN pip install -r requirements.txt
 
 # Copy application code

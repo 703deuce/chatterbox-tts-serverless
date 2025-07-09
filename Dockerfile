@@ -26,9 +26,9 @@ WORKDIR /app
 # Upgrade pip first
 RUN pip3 install --no-cache-dir --upgrade pip
 
-# Copy requirements and install all dependencies (including PyTorch with specific versions)
+# Copy requirements and install all dependencies (search both PyPI and PyTorch index)
 COPY requirements.txt .
-RUN pip3 install --no-cache-dir -r requirements.txt --index-url https://download.pytorch.org/whl/cu118
+RUN pip3 install --no-cache-dir -r requirements.txt --extra-index-url https://download.pytorch.org/whl/cu118
 
 # Copy handler code
 COPY handler.py .

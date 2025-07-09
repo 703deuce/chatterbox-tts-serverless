@@ -49,7 +49,7 @@ def base64_to_audio(base64_string):
     return audio_data, sample_rate
 
 def generate_tts(job_input: Dict[str, Any]) -> Dict[str, Any]:
-    """Generate text-to-speech audio with full parameter control"""
+    """Generate text-to-speech audio with basic parameters"""
     try:
         # Extract and validate text
         text = job_input.get('text', 'Hello, this is a test.')
@@ -58,9 +58,8 @@ def generate_tts(job_input: Dict[str, Any]) -> Dict[str, Any]:
         if len(text) > 5000:
             raise ValueError("Text too long (max 5000 characters)")
         
-        # Core synthesis parameters (using correct parameter names)
+        # Basic synthesis parameters (only use supported ones)
         exaggeration = job_input.get('exaggeration', 0.5)
-        cfg = job_input.get('cfg', job_input.get('cfg_weight', 0.5))  # Support both names
         temperature = job_input.get('temperature', 0.7)
         seed = job_input.get('seed', job_input.get('random_seed', None))
         
@@ -77,8 +76,6 @@ def generate_tts(job_input: Dict[str, Any]) -> Dict[str, Any]:
         # Validate core parameters
         if not 0.0 <= exaggeration <= 1.0:
             raise ValueError("Exaggeration must be between 0.0 and 1.0")
-        if not 0.0 <= cfg <= 1.0:
-            raise ValueError("CFG must be between 0.0 and 1.0")
         if not 0.1 <= temperature <= 2.0:
             raise ValueError("Temperature must be between 0.1 and 2.0")
         if seed is not None and not isinstance(seed, int):
@@ -100,11 +97,10 @@ def generate_tts(job_input: Dict[str, Any]) -> Dict[str, Any]:
         
         logger.info(f"TTS request - Text: {len(text)} chars, Mode: {voice_mode}, Exaggeration: {exaggeration}")
         
-        # Prepare generation parameters
+        # Prepare generation parameters (only use supported ones)
         generation_params = {
             'text': text,
             'exaggeration': exaggeration,
-            'cfg': cfg,
             'temperature': temperature
         }
         
@@ -163,7 +159,6 @@ def generate_tts(job_input: Dict[str, Any]) -> Dict[str, Any]:
             "text": text,
             "parameters": {
                 "exaggeration": exaggeration,
-                "cfg": cfg,
                 "temperature": temperature,
                 "seed": seed,
                 "voice_mode": voice_mode

@@ -58,8 +58,9 @@ def generate_tts(job_input: Dict[str, Any]) -> Dict[str, Any]:
         if len(text) > 5000:
             raise ValueError("Text too long (max 5000 characters)")
         
-        # Basic synthesis parameters (only use supported ones)
+        # Basic synthesis parameters (using correct parameter names)
         exaggeration = job_input.get('exaggeration', 0.5)
+        cfg_weight = job_input.get('cfg_weight', job_input.get('cfg', 0.5))  # Support both names
         temperature = job_input.get('temperature', 0.7)
         seed = job_input.get('seed', job_input.get('random_seed', None))
         
@@ -76,6 +77,8 @@ def generate_tts(job_input: Dict[str, Any]) -> Dict[str, Any]:
         # Validate core parameters
         if not 0.0 <= exaggeration <= 1.0:
             raise ValueError("Exaggeration must be between 0.0 and 1.0")
+        if not 0.0 <= cfg_weight <= 1.0:
+            raise ValueError("CFG weight must be between 0.0 and 1.0")
         if not 0.1 <= temperature <= 2.0:
             raise ValueError("Temperature must be between 0.1 and 2.0")
         if seed is not None and not isinstance(seed, int):
@@ -97,10 +100,11 @@ def generate_tts(job_input: Dict[str, Any]) -> Dict[str, Any]:
         
         logger.info(f"TTS request - Text: {len(text)} chars, Mode: {voice_mode}, Exaggeration: {exaggeration}")
         
-        # Prepare generation parameters (only use supported ones)
+        # Prepare generation parameters (using correct parameter names)
         generation_params = {
             'text': text,
             'exaggeration': exaggeration,
+            'cfg_weight': cfg_weight,
             'temperature': temperature
         }
         
@@ -159,6 +163,7 @@ def generate_tts(job_input: Dict[str, Any]) -> Dict[str, Any]:
             "text": text,
             "parameters": {
                 "exaggeration": exaggeration,
+                "cfg_weight": cfg_weight,
                 "temperature": temperature,
                 "seed": seed,
                 "voice_mode": voice_mode

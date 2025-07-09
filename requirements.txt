@@ -1,8 +1,5 @@
 runpod>=1.6.0
 chatterbox-tts
-torch==2.0.1
-torchvision==0.15.2
-torchaudio==2.0.2
 numpy==1.26.0
 transformers==4.46.3
 accelerate>=0.20.0

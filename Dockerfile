@@ -26,9 +26,9 @@ WORKDIR /app
 # Upgrade pip first
 RUN pip3 install --no-cache-dir --upgrade pip
 
-# Copy requirements and install all dependencies (search both PyPI and PyTorch index)
+# Copy requirements and install all dependencies (let chatterbox-tts handle PyTorch)
 COPY requirements.txt .
-RUN pip3 install --no-cache-dir -r requirements.txt --extra-index-url https://download.pytorch.org/whl/cu118
+RUN pip3 install --no-cache-dir -r requirements.txt
 
 # Copy handler code
 COPY handler.py .

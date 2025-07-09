@@ -26,12 +26,9 @@ WORKDIR /app
 # Upgrade pip first
 RUN pip3 install --no-cache-dir --upgrade pip
 
-# Install compatible PyTorch and TorchVision versions for CUDA 11.8
-RUN pip3 install --no-cache-dir torch==2.0.1 torchvision==0.15.2 torchaudio==2.0.2 --index-url https://download.pytorch.org/whl/cu118
-
-# Copy requirements and install other Python dependencies
+# Copy requirements and install all dependencies (including PyTorch with specific versions)
 COPY requirements.txt .
-RUN pip3 install --no-cache-dir -r requirements.txt
+RUN pip3 install --no-cache-dir -r requirements.txt --index-url https://download.pytorch.org/whl/cu118
 
 # Copy handler code
 COPY handler.py .

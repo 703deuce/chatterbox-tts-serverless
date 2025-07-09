@@ -150,28 +150,24 @@ def generate_tts(job_input: Dict[str, Any]) -> Dict[str, Any]:
             sf.write(temp_ref_path, reference_audio, ref_sr)
             generation_params['audio_prompt_path'] = temp_ref_path
         
-        # Generate speech using streaming API
-        streamed_chunks = []
-        chunk_count = 0
+        # Generate speech using regular (non-streaming) API for testing
+        logger.info("Starting regular TTS generation...")
         
-        logger.info("Starting streaming TTS generation...")
-        for audio_chunk, metrics in tts_model.generate_stream(**generation_params):
-            chunk_count += 1
-            streamed_chunks.append(audio_chunk)
-            
-            if chunk_count == 1:
-                logger.info(f"First chunk received - shape: {audio_chunk.shape}")
-            
-            # Log metrics if available
-            if metrics and job_input.get('print_metrics', False):
-                logger.info(f"Chunk {chunk_count} metrics: {metrics}")
+        # Use basic parameters for regular generation
+        basic_params = {
+            'text': text,
+            'exaggeration': exaggeration,
+            'cfg_weight': cfg_weight,
+            'temperature': temperature,
+        }
         
-        # Concatenate all streaming chunks
-        if streamed_chunks:
-            wav = torch.cat(streamed_chunks, dim=-1)
-            logger.info(f"Streaming complete - {chunk_count} chunks, final shape: {wav.shape}")
-        else:
-            raise RuntimeError("No audio chunks generated from streaming API")
+        # Add voice cloning if specified
+        if temp_ref_path:
+            basic_params['audio_prompt_path'] = temp_ref_path
+        
+        # Generate audio using regular generate method
+        wav = tts_model.generate(**basic_params)
+        logger.info(f"Regular TTS generation complete - shape: {wav.shape}")
         
         # Clean up temporary file
         if temp_ref_path:
@@ -183,19 +179,29 @@ def generate_tts(job_input: Dict[str, Any]) -> Dict[str, Any]:
         # Get model sample rate
         output_sr = sample_rate if sample_rate else getattr(tts_model, 'sr', 24000)
         
+        # Convert tensor to numpy for processing
+        if torch.is_tensor(wav):
+            wav_numpy = wav.detach().cpu().numpy()
+        else:
+            wav_numpy = wav
+        
+        # Ensure audio is in correct shape (flatten if needed)
+        if wav_numpy.ndim > 1:
+            wav_numpy = wav_numpy.flatten()
+        
         # Resample if different sample rate requested
         if sample_rate and sample_rate != getattr(tts_model, 'sr', 24000):
-            wav = librosa.resample(wav, orig_sr=getattr(tts_model, 'sr', 24000), target_sr=sample_rate)
+            wav_numpy = librosa.resample(wav_numpy, orig_sr=getattr(tts_model, 'sr', 24000), target_sr=sample_rate)
         
         # Apply audio normalization if specified
         if audio_normalization == 'peak':
-            wav = wav / np.max(np.abs(wav))
+            wav_numpy = wav_numpy / np.max(np.abs(wav_numpy))
         elif audio_normalization == 'rms':
-            rms = np.sqrt(np.mean(wav**2))
-            wav = wav / rms * 0.1
+            rms = np.sqrt(np.mean(wav_numpy**2))
+            wav_numpy = wav_numpy / rms * 0.1
         
         # Convert to base64
-        audio_base64 = audio_to_base64(wav, output_sr)
+        audio_base64 = audio_to_base64(wav_numpy, output_sr)
         
         # Prepare response
         response = {
@@ -213,7 +219,7 @@ def generate_tts(job_input: Dict[str, Any]) -> Dict[str, Any]:
             }
         }
         
-        logger.info(f"TTS generation successful - Duration: {len(wav) / output_sr:.2f}s")
+        logger.info(f"TTS generation successful - Duration: {len(wav_numpy) / output_sr:.2f}s")
         return response
         
     except Exception as e:

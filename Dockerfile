@@ -33,7 +33,12 @@ WORKDIR /workspace
 COPY requirements.txt .
 
 # Install Python dependencies (chatterbox-streaming will handle PyTorch 2.6.0 + CUDA)
-RUN pip install -r requirements.txt
+RUN pip install --no-cache-dir --upgrade pip setuptools wheel
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Debug: Verify chatterbox installation
+RUN python3 -c "import chatterbox; print('✅ chatterbox imported successfully')" || echo "❌ chatterbox import failed"
+RUN pip show chatterbox-tts || echo "❌ chatterbox-tts not found in pip list"
 
 # Copy application code
 COPY . .

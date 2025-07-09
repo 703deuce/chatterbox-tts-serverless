@@ -104,7 +104,7 @@ def generate_tts(job_input: Dict[str, Any]) -> Dict[str, Any]:
         generation_params = {
             'text': text,
             'exaggeration': exaggeration,
-            'cfg_weight': cfg_weight,
+            'cfg': cfg_weight,
             'temperature': temperature
         }
         

@@ -26,18 +26,18 @@ WORKDIR /app
 # Upgrade pip first
 RUN pip3 install --no-cache-dir --upgrade pip
 
-# Install PyTorch with CUDA support first
-RUN pip3 install --no-cache-dir torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
+# Install compatible PyTorch and TorchVision versions for CUDA 11.8
+RUN pip3 install --no-cache-dir torch==2.0.1 torchvision==0.15.2 torchaudio==2.0.2 --index-url https://download.pytorch.org/whl/cu118
 
 # Copy requirements and install other Python dependencies
 COPY requirements.txt .
 RUN pip3 install --no-cache-dir -r requirements.txt
 
-# Copy the handler script
+# Copy handler code
 COPY handler.py .
 
-# Create cache directories
-RUN mkdir -p /root/.cache/huggingface
+# Expose port for the serverless handler
+EXPOSE 8000
 
-# Set the entrypoint
-CMD ["python3", "-u", "handler.py"] 
+# Run the handler
+CMD ["python3", "handler.py"] 

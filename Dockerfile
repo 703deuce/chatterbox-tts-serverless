@@ -1,6 +1,9 @@
 # Use NVIDIA CUDA base image
 FROM nvidia/cuda:11.8.0-devel-ubuntu22.04
 
+# Cachebuster to force fresh builds
+ARG CACHEBUSTER=1
+
 # Set environment variables
 ENV DEBIAN_FRONTEND=noninteractive
 ENV PYTHONUNBUFFERED=1

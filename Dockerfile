@@ -42,4 +42,4 @@ COPY . .
 EXPOSE 8000
 
 # Run the handler
-CMD ["python", "-u", "handler.py"] 
+CMD ["python3", "-u", "handler.py"] 

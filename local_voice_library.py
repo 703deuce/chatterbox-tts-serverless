@@ -99,7 +99,9 @@ class LocalVoiceLibrary:
                 return None
             
             voice_info = self.voice_catalog[voice_id]
-            embedding_file = self.embeddings_dir / voice_info['embedding_file']
+            # Normalize path separators for cross-platform compatibility
+            embedding_path = voice_info['embedding_file'].replace('\\', '/')
+            embedding_file = self.embeddings_dir / embedding_path
             
             # Load compressed audio
             if not embedding_file.exists():

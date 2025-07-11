@@ -479,13 +479,6 @@ def generate_streaming_voice_cloning_tts(job_input: Dict[str, Any]) -> Dict[str,
         sample_rate = job_input.get('sample_rate', None)
         audio_normalization = job_input.get('audio_normalization', None)
         
-        # Voice cloning - required for this mode
-        reference_audio_b64 = job_input.get('reference_audio', None)
-        max_reference_duration_sec = job_input.get('max_reference_duration_sec', 30)
-        
-        if not reference_audio_b64:
-            raise ValueError("Reference audio is required for streaming voice cloning mode")
-        
         # Validate parameters
         if not isinstance(chunk_size, int) or chunk_size < 1:
             raise ValueError("Chunk size must be a positive integer")
@@ -499,18 +492,10 @@ def generate_streaming_voice_cloning_tts(job_input: Dict[str, Any]) -> Dict[str,
         logger.info(f"Streaming Voice Cloning TTS request - Text: {len(text)} chars, Chunk size: {chunk_size}")
         
         # Handle voice cloning - required for this mode
-        # Decode reference audio
-        reference_audio, ref_sr = base64_to_audio(reference_audio_b64)
+        temp_ref_path = handle_voice_cloning_source(job_input)
         
-        # Trim to max duration
-        max_samples = int(max_reference_duration_sec * ref_sr)
-        if len(reference_audio) > max_samples:
-            reference_audio = reference_audio[:max_samples]
-            logger.info(f"Trimmed reference audio to {max_reference_duration_sec} seconds")
-        
-        # Save temporarily for model usage
-        temp_ref_path = tempfile.mktemp(suffix='.wav')
-        sf.write(temp_ref_path, reference_audio, ref_sr)
+        if not temp_ref_path:
+            raise ValueError("Reference audio is required for streaming voice cloning mode")
         
         # Prepare generation parameters (as per GitHub docs)
         generation_params = {

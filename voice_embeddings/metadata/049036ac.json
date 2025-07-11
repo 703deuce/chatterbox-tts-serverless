@@ -1,0 +1,22 @@
+{
+  "voice_id": "049036ac",
+  "name": "male/Alan",
+  "description": "Male voice - Alan",
+  "category": "male",
+  "speaker_name": "Alan",
+  "original_file": "male\\Alan.wav",
+  "file_size": 2847884,
+  "compressed_size": 2986970,
+  "compression_ratio": "0.95x",
+  "duration": 59.33,
+  "sample_rate": 24000,
+  "audio_features": {
+    "mean_amplitude": 0.13702364265918732,
+    "max_amplitude": 0.988555908203125,
+    "rms_energy": 0.23338507115840912,
+    "spectral_centroid": 0.00014471725444309413,
+    "zero_crossing_rate": 0.1173718448872443
+  },
+  "created_at": "2025-07-11T05:18:45.315951",
+  "embedding_file": "embeddings\\049036ac.pkl.gz"
+}

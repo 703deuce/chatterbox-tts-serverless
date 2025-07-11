@@ -1,0 +1,22 @@
+{
+  "voice_id": "d63b3531",
+  "name": "female/Pamela",
+  "description": "Female voice - Pamela",
+  "category": "female",
+  "speaker_name": "Pamela",
+  "original_file": "female\\Pamela.wav",
+  "file_size": 2950604,
+  "compressed_size": 3121245,
+  "compression_ratio": "0.95x",
+  "duration": 61.47,
+  "sample_rate": 24000,
+  "audio_features": {
+    "mean_amplitude": 0.1354193240404129,
+    "max_amplitude": 0.988555908203125,
+    "rms_energy": 0.24375088512897491,
+    "spectral_centroid": 0.0020550526678562164,
+    "zero_crossing_rate": 0.11656710357837399
+  },
+  "created_at": "2025-07-11T05:18:16.678846",
+  "embedding_file": "embeddings\\d63b3531.pkl.gz"
+}

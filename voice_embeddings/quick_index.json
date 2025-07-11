@@ -1,0 +1,722 @@
+{
+  "c340981a": {
+    "name": "female/Abigail",
+    "category": "female",
+    "speaker": "Abigail",
+    "duration": 59.48
+  },
+  "600f3b74": {
+    "name": "female/Amanda",
+    "category": "female",
+    "speaker": "Amanda",
+    "duration": 63.53991666666667
+  },
+  "cb6bcdec": {
+    "name": "female/Amy",
+    "category": "female",
+    "speaker": "Amy",
+    "duration": 61.91
+  },
+  "314c30ad": {
+    "name": "female/Angela",
+    "category": "female",
+    "speaker": "Angela",
+    "duration": 64.53
+  },
+  "c3e3dfdd": {
+    "name": "female/Anna",
+    "category": "female",
+    "speaker": "Anna",
+    "duration": 63.62
+  },
+  "72b52091": {
+    "name": "female/Ashley",
+    "category": "female",
+    "speaker": "Ashley",
+    "duration": 64.66
+  },
+  "5556f70f": {
+    "name": "female/Barbara",
+    "category": "female",
+    "speaker": "Barbara",
+    "duration": 68.6
+  },
+  "ff6215a6": {
+    "name": "female/Betty",
+    "category": "female",
+    "speaker": "Betty",
+    "duration": 57.54
+  },
+  "4fde76bc": {
+    "name": "female/Brenda",
+    "category": "female",
+    "speaker": "Brenda",
+    "duration": 63.2
+  },
+  "266e53e7": {
+    "name": "female/Brittany",
+    "category": "female",
+    "speaker": "Brittany",
+    "duration": 63.60008333333333
+  },
+  "8cadb3d0": {
+    "name": "female/Carol",
+    "category": "female",
+    "speaker": "Carol",
+    "duration": 69.38
+  },
+  "9cb8d50d": {
+    "name": "female/Carolyn",
+    "category": "female",
+    "speaker": "Carolyn",
+    "duration": 46.76
+  },
+  "4a751d4d": {
+    "name": "female/Catherine",
+    "category": "female",
+    "speaker": "Catherine",
+    "duration": 76.1
+  },
+  "7abc1aa7": {
+    "name": "female/Charlotte",
+    "category": "female",
+    "speaker": "Charlotte",
+    "duration": 64.54
+  },
+  "a563a2ba": {
+    "name": "female/Chelsea",
+    "category": "female",
+    "speaker": "Chelsea",
+    "duration": 38.47
+  },
+  "e2626cc6": {
+    "name": "female/Christina",
+    "category": "female",
+    "speaker": "Christina",
+    "duration": 65.93
+  },
+  "399412ad": {
+    "name": "female/Christine",
+    "category": "female",
+    "speaker": "Christine",
+    "duration": 66.29
+  },
+  "2d4d9b5d": {
+    "name": "female/Cynthia",
+    "category": "female",
+    "speaker": "Cynthia",
+    "duration": 62.87
+  },
+  "fe54cb20": {
+    "name": "female/Deborah",
+    "category": "female",
+    "speaker": "Deborah",
+    "duration": 60.72
+  },
+  "3c165a74": {
+    "name": "female/Debra",
+    "category": "female",
+    "speaker": "Debra",
+    "duration": 64.03
+  },
+  "ffb7754e": {
+    "name": "female/Diana",
+    "category": "female",
+    "speaker": "Diana",
+    "duration": 9.810041666666667
+  },
+  "ff827c7f": {
+    "name": "female/Donna",
+    "category": "female",
+    "speaker": "Donna",
+    "duration": 5.93
+  },
+  "dc14a1c9": {
+    "name": "female/Dorothy",
+    "category": "female",
+    "speaker": "Dorothy",
+    "duration": 56.51
+  },
+  "b77a7a7f": {
+    "name": "female/Elizabeth",
+    "category": "female",
+    "speaker": "Elizabeth",
+    "duration": 60.6
+  },
+  "55e7818a": {
+    "name": "female/Emily",
+    "category": "female",
+    "speaker": "Emily",
+    "duration": 61.88
+  },
+  "168005d6": {
+    "name": "female/Emma",
+    "category": "female",
+    "speaker": "Emma",
+    "duration": 62.3
+  },
+  "f33c48a7": {
+    "name": "female/Evelyn",
+    "category": "female",
+    "speaker": "Evelyn",
+    "duration": 65.14
+  },
+  "d1502ade": {
+    "name": "female/Frances",
+    "category": "female",
+    "speaker": "Frances",
+    "duration": 61.93
+  },
+  "34c90838": {
+    "name": "female/Grace",
+    "category": "female",
+    "speaker": "Grace",
+    "duration": 65.35
+  },
+  "8776b38c": {
+    "name": "female/Hannah",
+    "category": "female",
+    "speaker": "Hannah",
+    "duration": 51.21991666666667
+  },
+  "0690eff6": {
+    "name": "female/Helen",
+    "category": "female",
+    "speaker": "Helen",
+    "duration": 61.07
+  },
+  "7fd7af54": {
+    "name": "female/Jennifer",
+    "category": "female",
+    "speaker": "Jennifer",
+    "duration": 58.25
+  },
+  "a7819873": {
+    "name": "female/Jessica",
+    "category": "female",
+    "speaker": "Jessica",
+    "duration": 64.89
+  },
+  "de0e48d2": {
+    "name": "female/Joyce",
+    "category": "female",
+    "speaker": "Joyce",
+    "duration": 74.34
+  },
+  "7b20e7bb": {
+    "name": "female/Julia",
+    "category": "female",
+    "speaker": "Julia",
+    "duration": 38.11
+  },
+  "c0668bd3": {
+    "name": "female/Julie",
+    "category": "female",
+    "speaker": "Julie",
+    "duration": 62.25
+  },
+  "321391cf": {
+    "name": "female/Karen",
+    "category": "female",
+    "speaker": "Karen",
+    "duration": 64.68
+  },
+  "7b5c38c5": {
+    "name": "female/Katherine",
+    "category": "female",
+    "speaker": "Katherine",
+    "duration": 65.72
+  },
+  "28ef3520": {
+    "name": "female/Kathleen",
+    "category": "female",
+    "speaker": "Kathleen",
+    "duration": 60.9
+  },
+  "fb0571a1": {
+    "name": "female/Kelly",
+    "category": "female",
+    "speaker": "Kelly",
+    "duration": 11.250083333333333
+  },
+  "b5a715f6": {
+    "name": "female/Kimberly",
+    "category": "female",
+    "speaker": "Kimberly",
+    "duration": 68.17004166666666
+  },
+  "3a41a00d": {
+    "name": "female/Laura",
+    "category": "female",
+    "speaker": "Laura",
+    "duration": 60.34
+  },
+  "11cee8d0": {
+    "name": "female/Lauren",
+    "category": "female",
+    "speaker": "Lauren",
+    "duration": 65.22
+  },
+  "2f6f16b1": {
+    "name": "female/Linda",
+    "category": "female",
+    "speaker": "Linda",
+    "duration": 60.29
+  },
+  "f6672038": {
+    "name": "female/Lisa",
+    "category": "female",
+    "speaker": "Lisa",
+    "duration": 62.93
+  },
+  "3ac411f6": {
+    "name": "female/Margaret",
+    "category": "female",
+    "speaker": "Margaret",
+    "duration": 27.24
+  },
+  "e6bc1dc5": {
+    "name": "female/Maria",
+    "category": "female",
+    "speaker": "Maria",
+    "duration": 57.99
+  },
+  "f0f868be": {
+    "name": "female/Marie",
+    "category": "female",
+    "speaker": "Marie",
+    "duration": 62.11
+  },
+  "9dd2715c": {
+    "name": "female/Martha",
+    "category": "female",
+    "speaker": "Martha",
+    "duration": 66.37
+  },
+  "05233f48": {
+    "name": "female/Mary",
+    "category": "female",
+    "speaker": "Mary",
+    "duration": 62.83
+  },
+  "f35d3c5f": {
+    "name": "female/Megan",
+    "category": "female",
+    "speaker": "Megan",
+    "duration": 67.84
+  },
+  "58484e8a": {
+    "name": "female/Michelle",
+    "category": "female",
+    "speaker": "Michelle",
+    "duration": 63.7
+  },
+  "feeebc5b": {
+    "name": "female/Nancy",
+    "category": "female",
+    "speaker": "Nancy",
+    "duration": 70.88
+  },
+  "8f83fb20": {
+    "name": "female/Nicole",
+    "category": "female",
+    "speaker": "Nicole",
+    "duration": 44.91
+  },
+  "4a23f4d4": {
+    "name": "female/Olivia",
+    "category": "female",
+    "speaker": "Olivia",
+    "duration": 55.23
+  },
+  "d63b3531": {
+    "name": "female/Pamela",
+    "category": "female",
+    "speaker": "Pamela",
+    "duration": 61.47
+  },
+  "48bfd7d0": {
+    "name": "female/Patricia",
+    "category": "female",
+    "speaker": "Patricia",
+    "duration": 60.23
+  },
+  "2c8e3e56": {
+    "name": "female/Rachel",
+    "category": "female",
+    "speaker": "Rachel",
+    "duration": 60.86
+  },
+  "de36c4e3": {
+    "name": "female/Rebecca",
+    "category": "female",
+    "speaker": "Rebecca",
+    "duration": 60.18
+  },
+  "7cabb4c2": {
+    "name": "female/Ruth",
+    "category": "female",
+    "speaker": "Ruth",
+    "duration": 61.38
+  },
+  "d815eecc": {
+    "name": "female/Samantha",
+    "category": "female",
+    "speaker": "Samantha",
+    "duration": 69.44
+  },
+  "4e58c995": {
+    "name": "female/Sandra",
+    "category": "female",
+    "speaker": "Sandra",
+    "duration": 51.01
+  },
+  "e2cccf84": {
+    "name": "male/Aaron",
+    "category": "male",
+    "speaker": "Aaron",
+    "duration": 79.74
+  },
+  "e7af96fa": {
+    "name": "male/Adam",
+    "category": "male",
+    "speaker": "Adam",
+    "duration": 61.11
+  },
+  "29a326ec": {
+    "name": "male/Adrian",
+    "category": "male",
+    "speaker": "Adrian",
+    "duration": 65.51
+  },
+  "049036ac": {
+    "name": "male/Alan",
+    "category": "male",
+    "speaker": "Alan",
+    "duration": 59.33
+  },
+  "13aa5d51": {
+    "name": "male/Albert",
+    "category": "male",
+    "speaker": "Albert",
+    "duration": 66.81
+  },
+  "60656e17": {
+    "name": "male/Alex",
+    "category": "male",
+    "speaker": "Alex",
+    "duration": 71.91
+  },
+  "a1405d19": {
+    "name": "male/Alexander",
+    "category": "male",
+    "speaker": "Alexander",
+    "duration": 62.26
+  },
+  "4a088b99": {
+    "name": "male/Andrew",
+    "category": "male",
+    "speaker": "Andrew",
+    "duration": 60.26
+  },
+  "2e314b21": {
+    "name": "male/Anthony",
+    "category": "male",
+    "speaker": "Anthony",
+    "duration": 72.81
+  },
+  "6a7d2f60": {
+    "name": "male/Arthur",
+    "category": "male",
+    "speaker": "Arthur",
+    "duration": 66.29
+  },
+  "382f7eaf": {
+    "name": "male/Austin",
+    "category": "male",
+    "speaker": "Austin",
+    "duration": 67.61
+  },
+  "74c10ec0": {
+    "name": "male/Benjamin",
+    "category": "male",
+    "speaker": "Benjamin",
+    "duration": 66.39
+  },
+  "852f6057": {
+    "name": "male/Blake",
+    "category": "male",
+    "speaker": "Blake",
+    "duration": 60.3
+  },
+  "33b30499": {
+    "name": "male/Brandon",
+    "category": "male",
+    "speaker": "Brandon",
+    "duration": 62.309916666666666
+  },
+  "7a4555a4": {
+    "name": "male/Brian",
+    "category": "male",
+    "speaker": "Brian",
+    "duration": 44.49033333333333
+  },
+  "1dbce3f0": {
+    "name": "male/Bruce",
+    "category": "male",
+    "speaker": "Bruce",
+    "duration": 68.6
+  },
+  "f04035a4": {
+    "name": "male/Bryan",
+    "category": "male",
+    "speaker": "Bryan",
+    "duration": 17.650083333333335
+  },
+  "b8c1f673": {
+    "name": "male/Carl",
+    "category": "male",
+    "speaker": "Carl",
+    "duration": 3.92
+  },
+  "4b7ea56f": {
+    "name": "male/Charles",
+    "category": "male",
+    "speaker": "Charles",
+    "duration": 77.44
+  },
+  "cd683f60": {
+    "name": "male/Christian",
+    "category": "male",
+    "speaker": "Christian",
+    "duration": 75.96
+  },
+  "07c697ca": {
+    "name": "male/Christopher",
+    "category": "male",
+    "speaker": "Christopher",
+    "duration": 43.78
+  },
+  "f3bd5f2a": {
+    "name": "male/Daniel",
+    "category": "male",
+    "speaker": "Daniel",
+    "duration": 61.75
+  },
+  "69ac8cc7": {
+    "name": "male/David",
+    "category": "male",
+    "speaker": "David",
+    "duration": 41.91
+  },
+  "44852dbe": {
+    "name": "male/Dennis",
+    "category": "male",
+    "speaker": "Dennis",
+    "duration": 68.56
+  },
+  "b12f5bb8": {
+    "name": "male/Derek",
+    "category": "male",
+    "speaker": "Derek",
+    "duration": 76.59
+  },
+  "b33427ce": {
+    "name": "male/Donald",
+    "category": "male",
+    "speaker": "Donald",
+    "duration": 68.49
+  },
+  "6b3d2ee9": {
+    "name": "male/Douglas",
+    "category": "male",
+    "speaker": "Douglas",
+    "duration": 60.62
+  },
+  "2c90975d": {
+    "name": "male/Edward",
+    "category": "male",
+    "speaker": "Edward",
+    "duration": 25.929916666666667
+  },
+  "3c22f6b2": {
+    "name": "male/Eric",
+    "category": "male",
+    "speaker": "Eric",
+    "duration": 25.53
+  },
+  "91b05c0a": {
+    "name": "male/Ethan",
+    "category": "male",
+    "speaker": "Ethan",
+    "duration": 61.96
+  },
+  "da61ac9c": {
+    "name": "male/Frank",
+    "category": "male",
+    "speaker": "Frank",
+    "duration": 68.78
+  },
+  "d6c2b7a8": {
+    "name": "male/Gary",
+    "category": "male",
+    "speaker": "Gary",
+    "duration": 63.79
+  },
+  "a8d71a7d": {
+    "name": "male/George",
+    "category": "male",
+    "speaker": "George",
+    "duration": 67.43
+  },
+  "a50a36d1": {
+    "name": "male/Gregory",
+    "category": "male",
+    "speaker": "Gregory",
+    "duration": 60.39
+  },
+  "a5a94c00": {
+    "name": "male/Harold",
+    "category": "male",
+    "speaker": "Harold",
+    "duration": 68.19
+  },
+  "5035bb64": {
+    "name": "male/Henry",
+    "category": "male",
+    "speaker": "Henry",
+    "duration": 71.38
+  },
+  "289e9e58": {
+    "name": "male/Isaac",
+    "category": "male",
+    "speaker": "Isaac",
+    "duration": 62.53
+  },
+  "fa141bed": {
+    "name": "male/Jacob",
+    "category": "male",
+    "speaker": "Jacob",
+    "duration": 65.63
+  },
+  "f9ce85a3": {
+    "name": "male/James",
+    "category": "male",
+    "speaker": "James",
+    "duration": 65.78
+  },
+  "df477c80": {
+    "name": "male/Jason",
+    "category": "male",
+    "speaker": "Jason",
+    "duration": 68.34
+  },
+  "616dedb4": {
+    "name": "male/Jeffrey",
+    "category": "male",
+    "speaker": "Jeffrey",
+    "duration": 60.57
+  },
+  "bffff397": {
+    "name": "male/Jeremy",
+    "category": "male",
+    "speaker": "Jeremy",
+    "duration": 64.32
+  },
+  "9ed2dc38": {
+    "name": "male/Jesse",
+    "category": "male",
+    "speaker": "Jesse",
+    "duration": 60.97
+  },
+  "468a8d22": {
+    "name": "male/John",
+    "category": "male",
+    "speaker": "John",
+    "duration": 60.06
+  },
+  "682770d9": {
+    "name": "male/Jonathan",
+    "category": "male",
+    "speaker": "Jonathan",
+    "duration": 60.58
+  },
+  "d0d1cec1": {
+    "name": "male/Jordan",
+    "category": "male",
+    "speaker": "Jordan",
+    "duration": 78.14
+  },
+  "174b309c": {
+    "name": "male/Joseph",
+    "category": "male",
+    "speaker": "Joseph",
+    "duration": 61.23
+  },
+  "57be6f4c": {
+    "name": "male/Joshua",
+    "category": "male",
+    "speaker": "Joshua",
+    "duration": 63.65
+  },
+  "b2422835": {
+    "name": "male/Justin",
+    "category": "male",
+    "speaker": "Justin",
+    "duration": 66.27
+  },
+  "0a260eb3": {
+    "name": "male/Keith",
+    "category": "male",
+    "speaker": "Keith",
+    "duration": 69.64
+  },
+  "f21444ac": {
+    "name": "male/Kenneth",
+    "category": "male",
+    "speaker": "Kenneth",
+    "duration": 49.330083333333334
+  },
+  "fec9ae88": {
+    "name": "male/Kevin",
+    "category": "male",
+    "speaker": "Kevin",
+    "duration": 59.21
+  },
+  "ec05560b": {
+    "name": "male/Kyle",
+    "category": "male",
+    "speaker": "Kyle",
+    "duration": 35.72
+  },
+  "d871d215": {
+    "name": "male/Larry",
+    "category": "male",
+    "speaker": "Larry",
+    "duration": 66.01
+  },
+  "f97ac9a1": {
+    "name": "male/Lawrence",
+    "category": "male",
+    "speaker": "Lawrence",
+    "duration": 53.13
+  },
+  "6aeaf16f": {
+    "name": "male/Mark",
+    "category": "male",
+    "speaker": "Mark",
+    "duration": 64.64
+  },
+  "fdcda0fc": {
+    "name": "male/Matthew",
+    "category": "male",
+    "speaker": "Matthew",
+    "duration": 64.59
+  },
+  "fdf93302": {
+    "name": "male/Michael",
+    "category": "male",
+    "speaker": "Michael",
+    "duration": 62.6
+  }
+}

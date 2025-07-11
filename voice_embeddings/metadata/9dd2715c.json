@@ -1,0 +1,22 @@
+{
+  "voice_id": "9dd2715c",
+  "name": "female/Martha",
+  "description": "Female voice - Martha",
+  "category": "female",
+  "speaker_name": "Martha",
+  "original_file": "female\\Martha.wav",
+  "file_size": 3185804,
+  "compressed_size": 3615084,
+  "compression_ratio": "0.88x",
+  "duration": 66.37,
+  "sample_rate": 24000,
+  "audio_features": {
+    "mean_amplitude": 0.1552208960056305,
+    "max_amplitude": 0.988555908203125,
+    "rms_energy": 0.2436109185218811,
+    "spectral_centroid": 0.0005913897766731679,
+    "zero_crossing_rate": 0.07785902130670315
+  },
+  "created_at": "2025-07-11T05:17:45.818990",
+  "embedding_file": "embeddings\\9dd2715c.pkl.gz"
+}

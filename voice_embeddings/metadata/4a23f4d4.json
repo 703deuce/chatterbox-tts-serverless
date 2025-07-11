@@ -1,0 +1,22 @@
+{
+  "voice_id": "4a23f4d4",
+  "name": "female/Olivia",
+  "description": "Female voice - Olivia",
+  "category": "female",
+  "speaker_name": "Olivia",
+  "original_file": "female\\Olivia.wav",
+  "file_size": 2651084,
+  "compressed_size": 2719712,
+  "compression_ratio": "0.97x",
+  "duration": 55.23,
+  "sample_rate": 24000,
+  "audio_features": {
+    "mean_amplitude": 0.12073991447687149,
+    "max_amplitude": 0.988555908203125,
+    "rms_energy": 0.22877958416938782,
+    "spectral_centroid": -0.0016341465525329113,
+    "zero_crossing_rate": 0.1522995898210437
+  },
+  "created_at": "2025-07-11T05:18:12.856355",
+  "embedding_file": "embeddings\\4a23f4d4.pkl.gz"
+}

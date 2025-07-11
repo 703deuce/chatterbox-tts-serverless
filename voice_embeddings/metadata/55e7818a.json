@@ -1,0 +1,22 @@
+{
+  "voice_id": "55e7818a",
+  "name": "female/Emily",
+  "description": "Female voice - Emily",
+  "category": "female",
+  "speaker_name": "Emily",
+  "original_file": "female\\Emily.wav",
+  "file_size": 2970284,
+  "compressed_size": 3321593,
+  "compression_ratio": "0.89x",
+  "duration": 61.88,
+  "sample_rate": 24000,
+  "audio_features": {
+    "mean_amplitude": 0.16492816805839539,
+    "max_amplitude": 0.988555908203125,
+    "rms_energy": 0.24760687351226807,
+    "spectral_centroid": 0.00010351632226957008,
+    "zero_crossing_rate": 0.11041000754821667
+  },
+  "created_at": "2025-07-11T05:16:36.539184",
+  "embedding_file": "embeddings\\55e7818a.pkl.gz"
+}

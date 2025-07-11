@@ -1,0 +1,22 @@
+{
+  "voice_id": "b33427ce",
+  "name": "male/Donald",
+  "description": "Male voice - Donald",
+  "category": "male",
+  "speaker_name": "Donald",
+  "original_file": "male\\Donald.wav",
+  "file_size": 3287564,
+  "compressed_size": 3546187,
+  "compression_ratio": "0.93x",
+  "duration": 68.49,
+  "sample_rate": 24000,
+  "audio_features": {
+    "mean_amplitude": 0.12469659000635147,
+    "max_amplitude": 0.988555908203125,
+    "rms_energy": 0.220628023147583,
+    "spectral_centroid": 0.012542136944830418,
+    "zero_crossing_rate": 0.09957359929284038
+  },
+  "created_at": "2025-07-11T05:19:52.257381",
+  "embedding_file": "embeddings\\b33427ce.pkl.gz"
+}

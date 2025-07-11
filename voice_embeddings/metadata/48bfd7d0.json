@@ -1,0 +1,22 @@
+{
+  "voice_id": "48bfd7d0",
+  "name": "female/Patricia",
+  "description": "Female voice - Patricia",
+  "category": "female",
+  "speaker_name": "Patricia",
+  "original_file": "female\\Patricia.wav",
+  "file_size": 2891084,
+  "compressed_size": 3218072,
+  "compression_ratio": "0.90x",
+  "duration": 60.23,
+  "sample_rate": 24000,
+  "audio_features": {
+    "mean_amplitude": 0.14395274221897125,
+    "max_amplitude": 0.988555908203125,
+    "rms_energy": 0.2375412881374359,
+    "spectral_centroid": -0.00034066668013110757,
+    "zero_crossing_rate": 0.169925127238037
+  },
+  "created_at": "2025-07-11T05:18:20.032821",
+  "embedding_file": "embeddings\\48bfd7d0.pkl.gz"
+}

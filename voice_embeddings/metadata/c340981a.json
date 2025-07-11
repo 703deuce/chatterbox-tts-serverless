@@ -1,0 +1,22 @@
+{
+  "voice_id": "c340981a",
+  "name": "female/Abigail",
+  "description": "Female voice - Abigail",
+  "category": "female",
+  "speaker_name": "Abigail",
+  "original_file": "female\\Abigail.wav",
+  "file_size": 2855084,
+  "compressed_size": 3190547,
+  "compression_ratio": "0.89x",
+  "duration": 59.48,
+  "sample_rate": 24000,
+  "audio_features": {
+    "mean_amplitude": 0.15651652216911316,
+    "max_amplitude": 0.988555908203125,
+    "rms_energy": 0.2446797490119934,
+    "spectral_centroid": 0.0026012398302555084,
+    "zero_crossing_rate": 0.0863280979097301
+  },
+  "created_at": "2025-07-11T05:14:57.559857",
+  "embedding_file": "embeddings\\c340981a.pkl.gz"
+}

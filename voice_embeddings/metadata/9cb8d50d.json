@@ -1,0 +1,22 @@
+{
+  "voice_id": "9cb8d50d",
+  "name": "female/Carolyn",
+  "description": "Female voice - Carolyn",
+  "category": "female",
+  "speaker_name": "Carolyn",
+  "original_file": "female\\Carolyn.wav",
+  "file_size": 2244524,
+  "compressed_size": 2734630,
+  "compression_ratio": "0.82x",
+  "duration": 46.76,
+  "sample_rate": 24000,
+  "audio_features": {
+    "mean_amplitude": 0.16054768860340118,
+    "max_amplitude": 0.988525390625,
+    "rms_energy": 0.2483360469341278,
+    "spectral_centroid": -0.001234584255144,
+    "zero_crossing_rate": 0.13210287648174765
+  },
+  "created_at": "2025-07-11T05:15:44.176387",
+  "embedding_file": "embeddings\\9cb8d50d.pkl.gz"
+}

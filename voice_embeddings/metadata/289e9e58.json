@@ -1,0 +1,22 @@
+{
+  "voice_id": "289e9e58",
+  "name": "male/Isaac",
+  "description": "Male voice - Isaac",
+  "category": "male",
+  "speaker_name": "Isaac",
+  "original_file": "male\\Isaac.wav",
+  "file_size": 3001484,
+  "compressed_size": 3220399,
+  "compression_ratio": "0.93x",
+  "duration": 62.53,
+  "sample_rate": 24000,
+  "audio_features": {
+    "mean_amplitude": 0.1275298148393631,
+    "max_amplitude": 0.988555908203125,
+    "rms_energy": 0.23230452835559845,
+    "spectral_centroid": 0.0002914583310484886,
+    "zero_crossing_rate": 0.08974964666936315
+  },
+  "created_at": "2025-07-11T05:20:38.868728",
+  "embedding_file": "embeddings\\289e9e58.pkl.gz"
+}

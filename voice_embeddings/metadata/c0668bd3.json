@@ -1,0 +1,22 @@
+{
+  "voice_id": "c0668bd3",
+  "name": "female/Julie",
+  "description": "Female voice - Julie",
+  "category": "female",
+  "speaker_name": "Julie",
+  "original_file": "female\\Julie.wav",
+  "file_size": 2988044,
+  "compressed_size": 3115751,
+  "compression_ratio": "0.96x",
+  "duration": 62.25,
+  "sample_rate": 24000,
+  "audio_features": {
+    "mean_amplitude": 0.14013949036598206,
+    "max_amplitude": 0.988555908203125,
+    "rms_energy": 0.23608838021755219,
+    "spectral_centroid": 0.00014296873996499926,
+    "zero_crossing_rate": 0.1552464225210325
+  },
+  "created_at": "2025-07-11T05:17:11.507133",
+  "embedding_file": "embeddings\\c0668bd3.pkl.gz"
+}

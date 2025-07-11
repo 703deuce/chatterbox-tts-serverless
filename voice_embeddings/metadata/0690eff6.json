@@ -1,0 +1,22 @@
+{
+  "voice_id": "0690eff6",
+  "name": "female/Helen",
+  "description": "Female voice - Helen",
+  "category": "female",
+  "speaker_name": "Helen",
+  "original_file": "female\\Helen.wav",
+  "file_size": 2931404,
+  "compressed_size": 3190941,
+  "compression_ratio": "0.92x",
+  "duration": 61.07,
+  "sample_rate": 24000,
+  "audio_features": {
+    "mean_amplitude": 0.14472560584545135,
+    "max_amplitude": 0.988555908203125,
+    "rms_energy": 0.24185973405838013,
+    "spectral_centroid": -0.00021420304256025702,
+    "zero_crossing_rate": 0.09664940276827327
+  },
+  "created_at": "2025-07-11T05:16:58.144759",
+  "embedding_file": "embeddings\\0690eff6.pkl.gz"
+}

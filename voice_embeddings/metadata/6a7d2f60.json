@@ -1,0 +1,22 @@
+{
+  "voice_id": "6a7d2f60",
+  "name": "male/Arthur",
+  "description": "Male voice - Arthur",
+  "category": "male",
+  "speaker_name": "Arthur",
+  "original_file": "male\\Arthur.wav",
+  "file_size": 3181964,
+  "compressed_size": 3558941,
+  "compression_ratio": "0.89x",
+  "duration": 66.29,
+  "sample_rate": 24000,
+  "audio_features": {
+    "mean_amplitude": 0.1503785252571106,
+    "max_amplitude": 0.988555908203125,
+    "rms_energy": 0.24448682367801666,
+    "spectral_centroid": 0.0005363550735637546,
+    "zero_crossing_rate": 0.07404087723190855
+  },
+  "created_at": "2025-07-11T05:19:06.963771",
+  "embedding_file": "embeddings\\6a7d2f60.pkl.gz"
+}

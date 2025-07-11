@@ -1,0 +1,22 @@
+{
+  "voice_id": "bffff397",
+  "name": "male/Jeremy",
+  "description": "Male voice - Jeremy",
+  "category": "male",
+  "speaker_name": "Jeremy",
+  "original_file": "male\\Jeremy.wav",
+  "file_size": 3087404,
+  "compressed_size": 3099733,
+  "compression_ratio": "1.00x",
+  "duration": 64.32,
+  "sample_rate": 24000,
+  "audio_features": {
+    "mean_amplitude": 0.12691615521907806,
+    "max_amplitude": 0.988555908203125,
+    "rms_energy": 0.22604665160179138,
+    "spectral_centroid": -0.001386256073601544,
+    "zero_crossing_rate": 0.10586786501597806
+  },
+  "created_at": "2025-07-11T05:20:57.405756",
+  "embedding_file": "embeddings\\bffff397.pkl.gz"
+}

@@ -1,0 +1,22 @@
+{
+  "voice_id": "6b3d2ee9",
+  "name": "male/Douglas",
+  "description": "Male voice - Douglas",
+  "category": "male",
+  "speaker_name": "Douglas",
+  "original_file": "male\\Douglas.wav",
+  "file_size": 2909804,
+  "compressed_size": 2909624,
+  "compression_ratio": "1.00x",
+  "duration": 60.62,
+  "sample_rate": 24000,
+  "audio_features": {
+    "mean_amplitude": 0.1370517462491989,
+    "max_amplitude": 0.988555908203125,
+    "rms_energy": 0.23387838900089264,
+    "spectral_centroid": -0.0020418388303369284,
+    "zero_crossing_rate": 0.10714293078668398
+  },
+  "created_at": "2025-07-11T05:19:55.400308",
+  "embedding_file": "embeddings\\6b3d2ee9.pkl.gz"
+}

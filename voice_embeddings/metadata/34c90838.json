@@ -1,0 +1,22 @@
+{
+  "voice_id": "34c90838",
+  "name": "female/Grace",
+  "description": "Female voice - Grace",
+  "category": "female",
+  "speaker_name": "Grace",
+  "original_file": "female\\Grace.wav",
+  "file_size": 3136844,
+  "compressed_size": 3476944,
+  "compression_ratio": "0.90x",
+  "duration": 65.35,
+  "sample_rate": 24000,
+  "audio_features": {
+    "mean_amplitude": 0.1490098237991333,
+    "max_amplitude": 0.988555908203125,
+    "rms_energy": 0.23969519138336182,
+    "spectral_centroid": 0.0009868349879980087,
+    "zero_crossing_rate": 0.1179616921459399
+  },
+  "created_at": "2025-07-11T05:16:50.956472",
+  "embedding_file": "embeddings\\34c90838.pkl.gz"
+}

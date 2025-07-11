@@ -1,0 +1,22 @@
+{
+  "voice_id": "468a8d22",
+  "name": "male/John",
+  "description": "Male voice - John",
+  "category": "male",
+  "speaker_name": "John",
+  "original_file": "male\\John.wav",
+  "file_size": 2882924,
+  "compressed_size": 3070395,
+  "compression_ratio": "0.94x",
+  "duration": 60.06,
+  "sample_rate": 24000,
+  "audio_features": {
+    "mean_amplitude": 0.12589721381664276,
+    "max_amplitude": 0.988555908203125,
+    "rms_energy": 0.22088223695755005,
+    "spectral_centroid": -0.0009124060743488371,
+    "zero_crossing_rate": 0.10808573932022097
+  },
+  "created_at": "2025-07-11T05:21:02.636928",
+  "embedding_file": "embeddings\\468a8d22.pkl.gz"
+}

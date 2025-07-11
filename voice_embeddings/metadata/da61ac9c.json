@@ -1,0 +1,22 @@
+{
+  "voice_id": "da61ac9c",
+  "name": "male/Frank",
+  "description": "Male voice - Frank",
+  "category": "male",
+  "speaker_name": "Frank",
+  "original_file": "male\\Frank.wav",
+  "file_size": 3301484,
+  "compressed_size": 3601535,
+  "compression_ratio": "0.92x",
+  "duration": 68.78,
+  "sample_rate": 24000,
+  "audio_features": {
+    "mean_amplitude": 0.14052526652812958,
+    "max_amplitude": 0.988555908203125,
+    "rms_energy": 0.23319336771965027,
+    "spectral_centroid": 0.00985485315322876,
+    "zero_crossing_rate": 0.10935234888554624
+  },
+  "created_at": "2025-07-11T05:20:06.162539",
+  "embedding_file": "embeddings\\da61ac9c.pkl.gz"
+}

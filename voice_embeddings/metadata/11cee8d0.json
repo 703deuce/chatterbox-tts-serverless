@@ -1,0 +1,22 @@
+{
+  "voice_id": "11cee8d0",
+  "name": "female/Lauren",
+  "description": "Female voice - Lauren",
+  "category": "female",
+  "speaker_name": "Lauren",
+  "original_file": "female\\Lauren.wav",
+  "file_size": 3130604,
+  "compressed_size": 3513300,
+  "compression_ratio": "0.89x",
+  "duration": 65.22,
+  "sample_rate": 24000,
+  "audio_features": {
+    "mean_amplitude": 0.1456918865442276,
+    "max_amplitude": 0.988555908203125,
+    "rms_energy": 0.23658257722854614,
+    "spectral_centroid": 0.0003851699875667691,
+    "zero_crossing_rate": 0.16256335132586586
+  },
+  "created_at": "2025-07-11T05:17:30.202919",
+  "embedding_file": "embeddings\\11cee8d0.pkl.gz"
+}

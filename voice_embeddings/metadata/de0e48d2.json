@@ -1,0 +1,22 @@
+{
+  "voice_id": "de0e48d2",
+  "name": "female/Joyce",
+  "description": "Female voice - Joyce",
+  "category": "female",
+  "speaker_name": "Joyce",
+  "original_file": "female\\Joyce.wav",
+  "file_size": 3568364,
+  "compressed_size": 3798534,
+  "compression_ratio": "0.94x",
+  "duration": 74.34,
+  "sample_rate": 24000,
+  "audio_features": {
+    "mean_amplitude": 0.146131694316864,
+    "max_amplitude": 0.988555908203125,
+    "rms_energy": 0.23633703589439392,
+    "spectral_centroid": -0.0003408030897844583,
+    "zero_crossing_rate": 0.1037878350528176
+  },
+  "created_at": "2025-07-11T05:17:07.895146",
+  "embedding_file": "embeddings\\de0e48d2.pkl.gz"
+}

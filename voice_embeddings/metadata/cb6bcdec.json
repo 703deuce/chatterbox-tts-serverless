@@ -1,0 +1,22 @@
+{
+  "voice_id": "cb6bcdec",
+  "name": "female/Amy",
+  "description": "Female voice - Amy",
+  "category": "female",
+  "speaker_name": "Amy",
+  "original_file": "female\\Amy.wav",
+  "file_size": 2971724,
+  "compressed_size": 3393237,
+  "compression_ratio": "0.88x",
+  "duration": 61.91,
+  "sample_rate": 24000,
+  "audio_features": {
+    "mean_amplitude": 0.14985966682434082,
+    "max_amplitude": 0.988555908203125,
+    "rms_energy": 0.24318036437034607,
+    "spectral_centroid": 0.00022736088430974633,
+    "zero_crossing_rate": 0.13642460589606276
+  },
+  "created_at": "2025-07-11T05:15:09.050343",
+  "embedding_file": "embeddings\\cb6bcdec.pkl.gz"
+}

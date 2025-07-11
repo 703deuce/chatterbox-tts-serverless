@@ -1,0 +1,22 @@
+{
+  "voice_id": "b77a7a7f",
+  "name": "female/Elizabeth",
+  "description": "Female voice - Elizabeth",
+  "category": "female",
+  "speaker_name": "Elizabeth",
+  "original_file": "female\\Elizabeth.wav",
+  "file_size": 2908844,
+  "compressed_size": 3038920,
+  "compression_ratio": "0.96x",
+  "duration": 60.6,
+  "sample_rate": 24000,
+  "audio_features": {
+    "mean_amplitude": 0.13289934396743774,
+    "max_amplitude": 0.988555908203125,
+    "rms_energy": 0.22542935609817505,
+    "spectral_centroid": -0.0015828514005988836,
+    "zero_crossing_rate": 0.2159909350872766
+  },
+  "created_at": "2025-07-11T05:16:33.105747",
+  "embedding_file": "embeddings\\b77a7a7f.pkl.gz"
+}

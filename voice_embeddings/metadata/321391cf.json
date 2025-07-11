@@ -1,0 +1,22 @@
+{
+  "voice_id": "321391cf",
+  "name": "female/Karen",
+  "description": "Female voice - Karen",
+  "category": "female",
+  "speaker_name": "Karen",
+  "original_file": "female\\Karen.wav",
+  "file_size": 3104684,
+  "compressed_size": 3482047,
+  "compression_ratio": "0.89x",
+  "duration": 64.68,
+  "sample_rate": 24000,
+  "audio_features": {
+    "mean_amplitude": 0.1458987146615982,
+    "max_amplitude": 0.988555908203125,
+    "rms_energy": 0.24366819858551025,
+    "spectral_centroid": 0.0005165417678654194,
+    "zero_crossing_rate": 0.1596933362279274
+  },
+  "created_at": "2025-07-11T05:17:13.620332",
+  "embedding_file": "embeddings\\321391cf.pkl.gz"
+}

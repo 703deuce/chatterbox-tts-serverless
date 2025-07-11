@@ -1,0 +1,22 @@
+{
+  "voice_id": "fe54cb20",
+  "name": "female/Deborah",
+  "description": "Female voice - Deborah",
+  "category": "female",
+  "speaker_name": "Deborah",
+  "original_file": "female\\Deborah.wav",
+  "file_size": 2914604,
+  "compressed_size": 2817970,
+  "compression_ratio": "1.03x",
+  "duration": 60.72,
+  "sample_rate": 24000,
+  "audio_features": {
+    "mean_amplitude": 0.12630878388881683,
+    "max_amplitude": 0.988555908203125,
+    "rms_energy": 0.23349636793136597,
+    "spectral_centroid": 0.0013018850004300475,
+    "zero_crossing_rate": 0.1441947629794981
+  },
+  "created_at": "2025-07-11T05:16:17.532165",
+  "embedding_file": "embeddings\\fe54cb20.pkl.gz"
+}

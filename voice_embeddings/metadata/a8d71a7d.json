@@ -1,0 +1,22 @@
+{
+  "voice_id": "a8d71a7d",
+  "name": "male/George",
+  "description": "Male voice - George",
+  "category": "male",
+  "speaker_name": "George",
+  "original_file": "male\\George.wav",
+  "file_size": 3236684,
+  "compressed_size": 3577387,
+  "compression_ratio": "0.90x",
+  "duration": 67.43,
+  "sample_rate": 24000,
+  "audio_features": {
+    "mean_amplitude": 0.1426001638174057,
+    "max_amplitude": 0.988555908203125,
+    "rms_energy": 0.23927627503871918,
+    "spectral_centroid": -0.0011555262608453631,
+    "zero_crossing_rate": 0.13726280170967528
+  },
+  "created_at": "2025-07-11T05:20:19.003330",
+  "embedding_file": "embeddings\\a8d71a7d.pkl.gz"
+}

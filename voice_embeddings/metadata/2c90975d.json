@@ -1,0 +1,22 @@
+{
+  "voice_id": "2c90975d",
+  "name": "male/Edward",
+  "description": "Male voice - Edward",
+  "category": "male",
+  "speaker_name": "Edward",
+  "original_file": "male\\Edward.wav",
+  "file_size": 1244680,
+  "compressed_size": 1321468,
+  "compression_ratio": "0.94x",
+  "duration": 25.929916666666667,
+  "sample_rate": 24000,
+  "audio_features": {
+    "mean_amplitude": 0.12206752598285675,
+    "max_amplitude": 0.988555908203125,
+    "rms_energy": 0.22130729258060455,
+    "spectral_centroid": -0.0006013914244249463,
+    "zero_crossing_rate": 0.10939601521411113
+  },
+  "created_at": "2025-07-11T05:19:56.970738",
+  "embedding_file": "embeddings\\2c90975d.pkl.gz"
+}

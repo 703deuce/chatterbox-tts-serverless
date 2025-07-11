@@ -1,0 +1,22 @@
+{
+  "voice_id": "f6672038",
+  "name": "female/Lisa",
+  "description": "Female voice - Lisa",
+  "category": "female",
+  "speaker_name": "Lisa",
+  "original_file": "female\\Lisa.wav",
+  "file_size": 3020684,
+  "compressed_size": 3178847,
+  "compression_ratio": "0.95x",
+  "duration": 62.93,
+  "sample_rate": 24000,
+  "audio_features": {
+    "mean_amplitude": 0.143496572971344,
+    "max_amplitude": 0.988555908203125,
+    "rms_energy": 0.2407587468624115,
+    "spectral_centroid": -0.00042659873724915087,
+    "zero_crossing_rate": 0.14418278522616745
+  },
+  "created_at": "2025-07-11T05:17:36.209569",
+  "embedding_file": "embeddings\\f6672038.pkl.gz"
+}

@@ -1,0 +1,22 @@
+{
+  "voice_id": "33b30499",
+  "name": "male/Brandon",
+  "description": "Male voice - Brandon",
+  "category": "male",
+  "speaker_name": "Brandon",
+  "original_file": "male\\Brandon.wav",
+  "file_size": 2990920,
+  "compressed_size": 3348705,
+  "compression_ratio": "0.89x",
+  "duration": 62.309916666666666,
+  "sample_rate": 24000,
+  "audio_features": {
+    "mean_amplitude": 0.14723442494869232,
+    "max_amplitude": 0.988555908203125,
+    "rms_energy": 0.2371736466884613,
+    "spectral_centroid": 0.0008693932904861867,
+    "zero_crossing_rate": 0.060528126560998555
+  },
+  "created_at": "2025-07-11T05:19:18.413402",
+  "embedding_file": "embeddings\\33b30499.pkl.gz"
+}

@@ -1,0 +1,22 @@
+{
+  "voice_id": "2e314b21",
+  "name": "male/Anthony",
+  "description": "Male voice - Anthony",
+  "category": "male",
+  "speaker_name": "Anthony",
+  "original_file": "male\\Anthony.wav",
+  "file_size": 3494924,
+  "compressed_size": 3811868,
+  "compression_ratio": "0.92x",
+  "duration": 72.81,
+  "sample_rate": 24000,
+  "audio_features": {
+    "mean_amplitude": 0.14310750365257263,
+    "max_amplitude": 0.988555908203125,
+    "rms_energy": 0.24356254935264587,
+    "spectral_centroid": -0.0006654129247181118,
+    "zero_crossing_rate": 0.09160319759373575
+  },
+  "created_at": "2025-07-11T05:19:03.066109",
+  "embedding_file": "embeddings\\2e314b21.pkl.gz"
+}

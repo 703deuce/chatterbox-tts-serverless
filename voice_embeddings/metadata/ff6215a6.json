@@ -1,0 +1,22 @@
+{
+  "voice_id": "ff6215a6",
+  "name": "female/Betty",
+  "description": "Female voice - Betty",
+  "category": "female",
+  "speaker_name": "Betty",
+  "original_file": "female\\Betty.wav",
+  "file_size": 2761964,
+  "compressed_size": 2946729,
+  "compression_ratio": "0.94x",
+  "duration": 57.54,
+  "sample_rate": 24000,
+  "audio_features": {
+    "mean_amplitude": 0.13326521217823029,
+    "max_amplitude": 0.988555908203125,
+    "rms_energy": 0.22990009188652039,
+    "spectral_centroid": 0.00020577410759869963,
+    "zero_crossing_rate": 0.10041572559359112
+  },
+  "created_at": "2025-07-11T05:15:25.378503",
+  "embedding_file": "embeddings\\ff6215a6.pkl.gz"
+}

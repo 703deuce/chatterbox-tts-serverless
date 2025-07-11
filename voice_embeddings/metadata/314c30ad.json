@@ -1,0 +1,22 @@
+{
+  "voice_id": "314c30ad",
+  "name": "female/Angela",
+  "description": "Female voice - Angela",
+  "category": "female",
+  "speaker_name": "Angela",
+  "original_file": "female\\Angela.wav",
+  "file_size": 3097484,
+  "compressed_size": 3269026,
+  "compression_ratio": "0.95x",
+  "duration": 64.53,
+  "sample_rate": 24000,
+  "audio_features": {
+    "mean_amplitude": 0.13839170336723328,
+    "max_amplitude": 0.988555908203125,
+    "rms_energy": 0.232560932636261,
+    "spectral_centroid": -0.047844622284173965,
+    "zero_crossing_rate": 0.03569143272601421
+  },
+  "created_at": "2025-07-11T05:15:12.581670",
+  "embedding_file": "embeddings\\314c30ad.pkl.gz"
+}

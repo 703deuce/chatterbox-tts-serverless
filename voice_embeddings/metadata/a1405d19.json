@@ -1,0 +1,22 @@
+{
+  "voice_id": "a1405d19",
+  "name": "male/Alexander",
+  "description": "Male voice - Alexander",
+  "category": "male",
+  "speaker_name": "Alexander",
+  "original_file": "male\\Alexander.wav",
+  "file_size": 2988524,
+  "compressed_size": 3168188,
+  "compression_ratio": "0.94x",
+  "duration": 62.26,
+  "sample_rate": 24000,
+  "audio_features": {
+    "mean_amplitude": 0.12054803967475891,
+    "max_amplitude": 0.988555908203125,
+    "rms_energy": 0.22636650502681732,
+    "spectral_centroid": 0.00042821007082238793,
+    "zero_crossing_rate": 0.14754400065852918
+  },
+  "created_at": "2025-07-11T05:18:56.457670",
+  "embedding_file": "embeddings\\a1405d19.pkl.gz"
+}

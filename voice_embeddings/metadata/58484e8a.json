@@ -1,0 +1,22 @@
+{
+  "voice_id": "58484e8a",
+  "name": "female/Michelle",
+  "description": "Female voice - Michelle",
+  "category": "female",
+  "speaker_name": "Michelle",
+  "original_file": "female\\Michelle.wav",
+  "file_size": 3057644,
+  "compressed_size": 3153372,
+  "compression_ratio": "0.97x",
+  "duration": 63.7,
+  "sample_rate": 24000,
+  "audio_features": {
+    "mean_amplitude": 0.1291666477918625,
+    "max_amplitude": 0.988555908203125,
+    "rms_energy": 0.22726555168628693,
+    "spectral_centroid": 0.002814418636262417,
+    "zero_crossing_rate": 0.1596266088609425
+  },
+  "created_at": "2025-07-11T05:18:05.064058",
+  "embedding_file": "embeddings\\58484e8a.pkl.gz"
+}

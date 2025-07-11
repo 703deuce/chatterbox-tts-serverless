@@ -1,0 +1,22 @@
+{
+  "voice_id": "f04035a4",
+  "name": "male/Bryan",
+  "description": "Male voice - Bryan",
+  "category": "male",
+  "speaker_name": "Bryan",
+  "original_file": "male\\Bryan.wav",
+  "file_size": 847248,
+  "compressed_size": 936041,
+  "compression_ratio": "0.91x",
+  "duration": 17.650083333333335,
+  "sample_rate": 24000,
+  "audio_features": {
+    "mean_amplitude": 0.13356231153011322,
+    "max_amplitude": 0.988555908203125,
+    "rms_energy": 0.23073075711727142,
+    "spectral_centroid": 0.0006759943207725883,
+    "zero_crossing_rate": 0.08600074126359475
+  },
+  "created_at": "2025-07-11T05:19:25.882979",
+  "embedding_file": "embeddings\\f04035a4.pkl.gz"
+}

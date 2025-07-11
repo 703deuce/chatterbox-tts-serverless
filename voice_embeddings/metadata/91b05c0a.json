@@ -1,0 +1,22 @@
+{
+  "voice_id": "91b05c0a",
+  "name": "male/Ethan",
+  "description": "Male voice - Ethan",
+  "category": "male",
+  "speaker_name": "Ethan",
+  "original_file": "male\\Ethan.wav",
+  "file_size": 2974124,
+  "compressed_size": 3191140,
+  "compression_ratio": "0.93x",
+  "duration": 61.96,
+  "sample_rate": 24000,
+  "audio_features": {
+    "mean_amplitude": 0.14236874878406525,
+    "max_amplitude": 0.988555908203125,
+    "rms_energy": 0.2427249699831009,
+    "spectral_centroid": -0.0002245544019388035,
+    "zero_crossing_rate": 0.1100509132578231
+  },
+  "created_at": "2025-07-11T05:20:01.526960",
+  "embedding_file": "embeddings\\91b05c0a.pkl.gz"
+}

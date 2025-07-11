@@ -1,0 +1,22 @@
+{
+  "voice_id": "d871d215",
+  "name": "male/Larry",
+  "description": "Male voice - Larry",
+  "category": "male",
+  "speaker_name": "Larry",
+  "original_file": "male\\Larry.wav",
+  "file_size": 3168524,
+  "compressed_size": 3332513,
+  "compression_ratio": "0.95x",
+  "duration": 66.01,
+  "sample_rate": 24000,
+  "audio_features": {
+    "mean_amplitude": 0.12920144200325012,
+    "max_amplitude": 0.988555908203125,
+    "rms_energy": 0.23368705809116364,
+    "spectral_centroid": -0.0008665820932947099,
+    "zero_crossing_rate": 0.15431573140163826
+  },
+  "created_at": "2025-07-11T05:21:36.986154",
+  "embedding_file": "embeddings\\d871d215.pkl.gz"
+}

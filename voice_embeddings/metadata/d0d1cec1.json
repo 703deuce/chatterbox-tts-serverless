@@ -1,0 +1,22 @@
+{
+  "voice_id": "d0d1cec1",
+  "name": "male/Jordan",
+  "description": "Male voice - Jordan",
+  "category": "male",
+  "speaker_name": "Jordan",
+  "original_file": "male\\Jordan.wav",
+  "file_size": 3750764,
+  "compressed_size": 3502207,
+  "compression_ratio": "1.07x",
+  "duration": 78.14,
+  "sample_rate": 24000,
+  "audio_features": {
+    "mean_amplitude": 0.1456746608018875,
+    "max_amplitude": 0.988555908203125,
+    "rms_energy": 0.24236437678337097,
+    "spectral_centroid": 0.0007992502651177347,
+    "zero_crossing_rate": 0.1231129613050088
+  },
+  "created_at": "2025-07-11T05:21:10.302724",
+  "embedding_file": "embeddings\\d0d1cec1.pkl.gz"
+}

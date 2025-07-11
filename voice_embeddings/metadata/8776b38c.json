@@ -1,0 +1,22 @@
+{
+  "voice_id": "8776b38c",
+  "name": "female/Hannah",
+  "description": "Female voice - Hannah",
+  "category": "female",
+  "speaker_name": "Hannah",
+  "original_file": "female\\Hannah.wav",
+  "file_size": 2458600,
+  "compressed_size": 2683010,
+  "compression_ratio": "0.92x",
+  "duration": 51.21991666666667,
+  "sample_rate": 24000,
+  "audio_features": {
+    "mean_amplitude": 0.13460321724414825,
+    "max_amplitude": 0.988555908203125,
+    "rms_energy": 0.23322434723377228,
+    "spectral_centroid": 0.0008739217882975936,
+    "zero_crossing_rate": 0.140179959439573
+  },
+  "created_at": "2025-07-11T05:16:53.854277",
+  "embedding_file": "embeddings\\8776b38c.pkl.gz"
+}

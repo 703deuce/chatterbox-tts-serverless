@@ -1,0 +1,22 @@
+{
+  "voice_id": "ff827c7f",
+  "name": "female/Donna",
+  "description": "Female voice - Donna",
+  "category": "female",
+  "speaker_name": "Donna",
+  "original_file": "female\\Donna.wav",
+  "file_size": 284684,
+  "compressed_size": 320468,
+  "compression_ratio": "0.89x",
+  "duration": 5.93,
+  "sample_rate": 24000,
+  "audio_features": {
+    "mean_amplitude": 0.14480376243591309,
+    "max_amplitude": 0.988555908203125,
+    "rms_energy": 0.2346690446138382,
+    "spectral_centroid": -0.001500776968896389,
+    "zero_crossing_rate": 0.13290565560466278
+  },
+  "created_at": "2025-07-11T05:16:20.911369",
+  "embedding_file": "embeddings\\ff827c7f.pkl.gz"
+}

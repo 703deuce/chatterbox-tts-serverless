@@ -1,0 +1,22 @@
+{
+  "voice_id": "f21444ac",
+  "name": "male/Kenneth",
+  "description": "Male voice - Kenneth",
+  "category": "male",
+  "speaker_name": "Kenneth",
+  "original_file": "male\\Kenneth.wav",
+  "file_size": 2367888,
+  "compressed_size": 2430594,
+  "compression_ratio": "0.97x",
+  "duration": 49.330083333333334,
+  "sample_rate": 24000,
+  "audio_features": {
+    "mean_amplitude": 0.1708235889673233,
+    "max_amplitude": 0.988555908203125,
+    "rms_energy": 0.23653681576251984,
+    "spectral_centroid": 0.09552637487649918,
+    "zero_crossing_rate": 0.06435902395514566
+  },
+  "created_at": "2025-07-11T05:21:27.635298",
+  "embedding_file": "embeddings\\f21444ac.pkl.gz"
+}

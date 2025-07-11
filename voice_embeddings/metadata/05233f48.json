@@ -1,0 +1,22 @@
+{
+  "voice_id": "05233f48",
+  "name": "female/Mary",
+  "description": "Female voice - Mary",
+  "category": "female",
+  "speaker_name": "Mary",
+  "original_file": "female\\Mary.wav",
+  "file_size": 3015884,
+  "compressed_size": 3213638,
+  "compression_ratio": "0.94x",
+  "duration": 62.83,
+  "sample_rate": 24000,
+  "audio_features": {
+    "mean_amplitude": 0.13388483226299286,
+    "max_amplitude": 0.988555908203125,
+    "rms_energy": 0.2365874946117401,
+    "spectral_centroid": 0.0012836277019232512,
+    "zero_crossing_rate": 0.13903797219877195
+  },
+  "created_at": "2025-07-11T05:17:55.851163",
+  "embedding_file": "embeddings\\05233f48.pkl.gz"
+}

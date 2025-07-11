@@ -1,0 +1,22 @@
+{
+  "voice_id": "6aeaf16f",
+  "name": "male/Mark",
+  "description": "Male voice - Mark",
+  "category": "male",
+  "speaker_name": "Mark",
+  "original_file": "male\\Mark.wav",
+  "file_size": 3102764,
+  "compressed_size": 3329611,
+  "compression_ratio": "0.93x",
+  "duration": 64.64,
+  "sample_rate": 24000,
+  "audio_features": {
+    "mean_amplitude": 0.15299464762210846,
+    "max_amplitude": 0.988555908203125,
+    "rms_energy": 0.24291208386421204,
+    "spectral_centroid": -0.0004269712371751666,
+    "zero_crossing_rate": 0.09141404407361546
+  },
+  "created_at": "2025-07-11T05:21:43.372068",
+  "embedding_file": "embeddings\\6aeaf16f.pkl.gz"
+}

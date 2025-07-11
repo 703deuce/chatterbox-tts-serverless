@@ -1,0 +1,22 @@
+{
+  "voice_id": "b8c1f673",
+  "name": "male/Carl",
+  "description": "Male voice - Carl",
+  "category": "male",
+  "speaker_name": "Carl",
+  "original_file": "male\\Carl.wav",
+  "file_size": 188204,
+  "compressed_size": 202331,
+  "compression_ratio": "0.93x",
+  "duration": 3.92,
+  "sample_rate": 24000,
+  "audio_features": {
+    "mean_amplitude": 0.14745832979679108,
+    "max_amplitude": 0.988555908203125,
+    "rms_energy": 0.2424333691596985,
+    "spectral_centroid": 0.00017644466424826533,
+    "zero_crossing_rate": 0.08102764697754015
+  },
+  "created_at": "2025-07-11T05:19:26.023974",
+  "embedding_file": "embeddings\\b8c1f673.pkl.gz"
+}

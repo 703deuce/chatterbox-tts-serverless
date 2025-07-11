@@ -1,0 +1,22 @@
+{
+  "voice_id": "29a326ec",
+  "name": "male/Adrian",
+  "description": "Male voice - Adrian",
+  "category": "male",
+  "speaker_name": "Adrian",
+  "original_file": "male\\Adrian.wav",
+  "file_size": 3144524,
+  "compressed_size": 3327113,
+  "compression_ratio": "0.95x",
+  "duration": 65.51,
+  "sample_rate": 24000,
+  "audio_features": {
+    "mean_amplitude": 0.13115665316581726,
+    "max_amplitude": 0.988555908203125,
+    "rms_energy": 0.23467914760112762,
+    "spectral_centroid": -0.0005864611594006419,
+    "zero_crossing_rate": 0.07826736265923946
+  },
+  "created_at": "2025-07-11T05:18:43.364789",
+  "embedding_file": "embeddings\\29a326ec.pkl.gz"
+}

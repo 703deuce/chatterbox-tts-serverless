@@ -1,0 +1,22 @@
+{
+  "voice_id": "2d4d9b5d",
+  "name": "female/Cynthia",
+  "description": "Female voice - Cynthia",
+  "category": "female",
+  "speaker_name": "Cynthia",
+  "original_file": "female\\Cynthia.wav",
+  "file_size": 3017804,
+  "compressed_size": 3247598,
+  "compression_ratio": "0.93x",
+  "duration": 62.87,
+  "sample_rate": 24000,
+  "audio_features": {
+    "mean_amplitude": 0.13785751163959503,
+    "max_amplitude": 0.988555908203125,
+    "rms_energy": 0.2362879514694214,
+    "spectral_centroid": 0.00014696078142151237,
+    "zero_crossing_rate": 0.14311220449088363
+  },
+  "created_at": "2025-07-11T05:16:13.353647",
+  "embedding_file": "embeddings\\2d4d9b5d.pkl.gz"
+}

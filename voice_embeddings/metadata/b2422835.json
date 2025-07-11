@@ -1,0 +1,22 @@
+{
+  "voice_id": "b2422835",
+  "name": "male/Justin",
+  "description": "Male voice - Justin",
+  "category": "male",
+  "speaker_name": "Justin",
+  "original_file": "male\\Justin.wav",
+  "file_size": 3181004,
+  "compressed_size": 3664087,
+  "compression_ratio": "0.87x",
+  "duration": 66.27,
+  "sample_rate": 24000,
+  "audio_features": {
+    "mean_amplitude": 0.1676350235939026,
+    "max_amplitude": 0.988555908203125,
+    "rms_energy": 0.2439795285463333,
+    "spectral_centroid": -0.0005667005898430943,
+    "zero_crossing_rate": 0.09204774159231276
+  },
+  "created_at": "2025-07-11T05:21:21.507133",
+  "embedding_file": "embeddings\\b2422835.pkl.gz"
+}

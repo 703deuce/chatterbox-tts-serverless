@@ -1,0 +1,22 @@
+{
+  "voice_id": "600f3b74",
+  "name": "female/Amanda",
+  "description": "Female voice - Amanda",
+  "category": "female",
+  "speaker_name": "Amanda",
+  "original_file": "female\\Amanda.wav",
+  "file_size": 3049960,
+  "compressed_size": 3506476,
+  "compression_ratio": "0.87x",
+  "duration": 63.53991666666667,
+  "sample_rate": 24000,
+  "audio_features": {
+    "mean_amplitude": 0.13488513231277466,
+    "max_amplitude": 0.988555908203125,
+    "rms_energy": 0.23387274146080017,
+    "spectral_centroid": -0.0005417176871560514,
+    "zero_crossing_rate": 0.1359408822675
+  },
+  "created_at": "2025-07-11T05:15:04.492849",
+  "embedding_file": "embeddings\\600f3b74.pkl.gz"
+}

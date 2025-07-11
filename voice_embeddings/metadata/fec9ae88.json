@@ -1,0 +1,22 @@
+{
+  "voice_id": "fec9ae88",
+  "name": "male/Kevin",
+  "description": "Male voice - Kevin",
+  "category": "male",
+  "speaker_name": "Kevin",
+  "original_file": "male\\Kevin.wav",
+  "file_size": 2842124,
+  "compressed_size": 3113419,
+  "compression_ratio": "0.91x",
+  "duration": 59.21,
+  "sample_rate": 24000,
+  "audio_features": {
+    "mean_amplitude": 0.13223999738693237,
+    "max_amplitude": 0.988555908203125,
+    "rms_energy": 0.23020167648792267,
+    "spectral_centroid": -0.00011514767538756132,
+    "zero_crossing_rate": 0.11191881433233007
+  },
+  "created_at": "2025-07-11T05:21:30.720685",
+  "embedding_file": "embeddings\\fec9ae88.pkl.gz"
+}

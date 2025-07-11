@@ -1,0 +1,22 @@
+{
+  "voice_id": "60656e17",
+  "name": "male/Alex",
+  "description": "Male voice - Alex",
+  "category": "male",
+  "speaker_name": "Alex",
+  "original_file": "male\\Alex.wav",
+  "file_size": 3451724,
+  "compressed_size": 3661200,
+  "compression_ratio": "0.94x",
+  "duration": 71.91,
+  "sample_rate": 24000,
+  "audio_features": {
+    "mean_amplitude": 0.13153661787509918,
+    "max_amplitude": 0.988555908203125,
+    "rms_energy": 0.23221129179000854,
+    "spectral_centroid": 0.00154320546425879,
+    "zero_crossing_rate": 0.05410469922165393
+  },
+  "created_at": "2025-07-11T05:18:52.168900",
+  "embedding_file": "embeddings\\60656e17.pkl.gz"
+}

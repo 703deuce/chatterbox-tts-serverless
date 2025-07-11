@@ -12,12 +12,16 @@ from pathlib import Path
 from typing import Optional, Dict, Any, Generator, Tuple, List
 from chatterbox.tts import ChatterboxTTS
 
+# Import local voice library
+from local_voice_library import initialize_local_voice_library, LocalVoiceLibrary
+
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # Global model variables
 tts_model: Optional[ChatterboxTTS] = None
+local_voice_library: Optional[LocalVoiceLibrary] = None
 # Automatically detect the best available device
 if torch.cuda.is_available():
     device = "cuda"
@@ -27,8 +31,8 @@ else:
     device = "cpu"
 
 def load_models():
-    """Load TTS model on startup"""
-    global tts_model
+    """Load TTS model and voice library on startup"""
+    global tts_model, local_voice_library
     
     logger.info(f"Loading models on device: {device}")
     
@@ -36,6 +40,16 @@ def load_models():
         logger.info("Loading ChatterboxTTS model...")
         tts_model = ChatterboxTTS.from_pretrained(device=device)
         logger.info("ChatterboxTTS model loaded successfully")
+        
+        # Initialize local voice library
+        logger.info("Initializing local voice library...")
+        local_voice_library = initialize_local_voice_library()
+        if local_voice_library.is_available():
+            stats = local_voice_library.get_stats()
+            logger.info(f"Local voice library loaded with {stats['total_voices']} voices")
+        else:
+            logger.warning("No local voice library found - voice_id parameters will not work")
+            logger.warning("Run generate_local_embeddings.py first to create voice embeddings")
         
     except Exception as e:
         logger.error(f"Failed to load models: {e}")
@@ -83,32 +97,152 @@ def process_audio_tensor(wav_tensor, sample_rate_target=None, audio_normalizatio
     
     return wav_numpy
 
-def generate_basic_tts(job_input: Dict[str, Any]) -> Dict[str, Any]:
-    """Generate basic TTS as shown in GitHub documentation"""
+# Voice Library - Store reference voices on the server
+VOICE_LIBRARY_PATH = Path("/tmp/voice_library")
+VOICE_LIBRARY_PATH.mkdir(exist_ok=True)
+
+# Built-in voice library (add your voices here)
+BUILT_IN_VOICES = {
+    "amy": "default female voice",
+    "john": "default male voice",
+    "sarah": "professional female voice",
+    "mike": "professional male voice"
+}
+
+def save_voice_to_library(voice_name: str, audio_data: np.ndarray, sample_rate: int) -> bool:
+    """Save a voice to the server-side voice library"""
     try:
-        # Extract and validate text
-        text = job_input.get('text', 'Hello, this is a test.')
-        if not text or len(text.strip()) == 0:
-            raise ValueError("Text cannot be empty")
-        if len(text) > 5000:
-            raise ValueError("Text too long (max 5000 characters)")
+        voice_path = VOICE_LIBRARY_PATH / f"{voice_name}.wav"
+        sf.write(voice_path, audio_data, sample_rate)
+        logger.info(f"Voice '{voice_name}' saved to library: {voice_path}")
+        return True
+    except Exception as e:
+        logger.error(f"Failed to save voice '{voice_name}': {e}")
+        return False
+
+def get_voice_from_library(voice_name: str) -> Optional[str]:
+    """Get a voice file path from the library"""
+    try:
+        voice_path = VOICE_LIBRARY_PATH / f"{voice_name}.wav"
+        if voice_path.exists():
+            return str(voice_path)
+        else:
+            logger.warning(f"Voice '{voice_name}' not found in library")
+            return None
+    except Exception as e:
+        logger.error(f"Error accessing voice '{voice_name}': {e}")
+        return None
+
+def list_available_voices() -> Dict[str, Any]:
+    """List all available voices in the library"""
+    try:
+        voices = {}
         
-        # Basic parameters (minimal as per GitHub docs)
-        sample_rate = job_input.get('sample_rate', None)
-        audio_normalization = job_input.get('audio_normalization', None)
+        # Add built-in voices
+        for voice_name, description in BUILT_IN_VOICES.items():
+            voices[voice_name] = {
+                "type": "built-in",
+                "description": description,
+                "available": get_voice_from_library(voice_name) is not None
+            }
         
-        # Voice cloning support
-        reference_audio_b64 = job_input.get('reference_audio', None)
+        # Add user-uploaded voices
+        for voice_file in VOICE_LIBRARY_PATH.glob("*.wav"):
+            voice_name = voice_file.stem
+            if voice_name not in BUILT_IN_VOICES:
+                voices[voice_name] = {
+                    "type": "user-uploaded",
+                    "description": f"User uploaded voice: {voice_name}",
+                    "available": True
+                }
+        
+        return voices
+    except Exception as e:
+        logger.error(f"Error listing voices: {e}")
+        return {}
+
+def upload_voice_to_library(job_input: Dict[str, Any]) -> Dict[str, Any]:
+    """Upload a voice to the server library"""
+    try:
+        voice_name = job_input.get('voice_name')
+        reference_audio_b64 = job_input.get('reference_audio')
+        voice_description = job_input.get('voice_description', f"User uploaded voice: {voice_name}")
+        
+        if not voice_name:
+            raise ValueError("voice_name is required")
+        if not reference_audio_b64:
+            raise ValueError("reference_audio is required")
+        
+        # Decode the audio
+        reference_audio, ref_sr = base64_to_audio(reference_audio_b64)
+        
+        # Save to library
+        if save_voice_to_library(voice_name, reference_audio, ref_sr):
+            return {
+                "success": True,
+                "message": f"Voice '{voice_name}' uploaded to library",
+                "voice_name": voice_name,
+                "description": voice_description
+            }
+        else:
+            return {
+                "success": False,
+                "message": f"Failed to upload voice '{voice_name}'"
+            }
+            
+    except Exception as e:
+        logger.error(f"Voice upload failed: {e}")
+        return {
+            "success": False,
+            "message": f"Voice upload failed: {str(e)}"
+        }
+
+def handle_voice_cloning_source(job_input: Dict[str, Any]) -> Optional[str]:
+    """Handle voice cloning source - by voice_id, voice_name, or reference audio"""
+    try:
+        voice_id = job_input.get('voice_id')
+        voice_name = job_input.get('voice_name')
+        reference_audio_b64 = job_input.get('reference_audio')
         max_reference_duration_sec = job_input.get('max_reference_duration_sec', 30)
         
-        logger.info(f"Basic TTS request - Text: {len(text)} chars")
+        # Option 1: Use voice from local embeddings by ID
+        if voice_id:
+            if local_voice_library and local_voice_library.is_available():
+                audio_array = local_voice_library.get_voice_audio(voice_id)
+                if audio_array is not None:
+                    logger.info(f"Using voice from local embeddings: {voice_id}")
+                    # Save temporarily for model usage
+                    temp_ref_path = tempfile.mktemp(suffix='.wav')
+                    sf.write(temp_ref_path, audio_array, 24000)
+                    return temp_ref_path
+                else:
+                    raise ValueError(f"Voice ID '{voice_id}' not found in local embeddings")
+            else:
+                raise ValueError("Local voice library not available. Run generate_local_embeddings.py first.")
         
-        # Prepare generation parameters (minimal as per GitHub docs)
-        generation_params = {'text': text}
+        # Option 2: Use voice from library by name
+        elif voice_name:
+            # First try local voice library
+            if local_voice_library and local_voice_library.is_available():
+                audio_array = local_voice_library.get_voice_audio_by_name(voice_name)
+                if audio_array is not None:
+                    logger.info(f"Using voice from local embeddings by name: {voice_name}")
+                    # Save temporarily for model usage
+                    temp_ref_path = tempfile.mktemp(suffix='.wav')
+                    sf.write(temp_ref_path, audio_array, 24000)
+                    return temp_ref_path
+            
+            # Fall back to old library
+            voice_path = get_voice_from_library(voice_name)
+            if voice_path:
+                logger.info(f"Using voice from old library: {voice_name}")
+                return voice_path
+            else:
+                raise ValueError(f"Voice '{voice_name}' not found in any library. Try voice_id or reference_audio instead.")
         
-        # Handle voice cloning
-        temp_ref_path = None
-        if reference_audio_b64:
+        # Option 3: Use provided reference audio
+        elif reference_audio_b64:
+            logger.info("Using provided reference audio")
             # Decode reference audio
             reference_audio, ref_sr = base64_to_audio(reference_audio_b64)
             
@@ -121,15 +255,49 @@ def generate_basic_tts(job_input: Dict[str, Any]) -> Dict[str, Any]:
             # Save temporarily for model usage
             temp_ref_path = tempfile.mktemp(suffix='.wav')
             sf.write(temp_ref_path, reference_audio, ref_sr)
+            return temp_ref_path
+        
+        # No voice cloning source provided
+        else:
+            return None
+            
+    except Exception as e:
+        logger.error(f"Error handling voice cloning source: {e}")
+        raise e
+
+def generate_basic_tts(job_input: Dict[str, Any]) -> Dict[str, Any]:
+    """Generate basic TTS with voice library support"""
+    try:
+        # Extract and validate text
+        text = job_input.get('text', 'Hello, this is a test.')
+        if not text or len(text.strip()) == 0:
+            raise ValueError("Text cannot be empty")
+        if len(text) > 5000:
+            raise ValueError("Text too long (max 5000 characters)")
+        
+        # Basic parameters
+        sample_rate = job_input.get('sample_rate', None)
+        audio_normalization = job_input.get('audio_normalization', None)
+        
+        logger.info(f"Basic TTS request - Text: {len(text)} chars")
+        
+        # Prepare generation parameters
+        generation_params = {'text': text}
+        
+        # Handle voice cloning (by name or by audio)
+        temp_ref_path = handle_voice_cloning_source(job_input)
+        voice_cloning_enabled = temp_ref_path is not None
+        
+        if temp_ref_path:
             generation_params['audio_prompt_path'] = temp_ref_path
         
-        # Generate audio using basic method
+        # Generate audio
         logger.info("Starting basic TTS generation...")
         wav = tts_model.generate(**generation_params)
         logger.info(f"Basic TTS generation complete - shape: {wav.shape}")
         
-        # Clean up temporary file
-        if temp_ref_path:
+        # Clean up temporary file if we created one
+        if temp_ref_path and temp_ref_path.startswith('/tmp/'):
             try:
                 Path(temp_ref_path).unlink()
             except:
@@ -149,7 +317,9 @@ def generate_basic_tts(job_input: Dict[str, Any]) -> Dict[str, Any]:
             "text": text,
             "mode": "basic",
             "parameters": {
-                "voice_cloning": reference_audio_b64 is not None
+                "voice_cloning": voice_cloning_enabled,
+                "voice_id": job_input.get('voice_id', 'none'),
+                "voice_name": job_input.get('voice_name', 'none')
             }
         }
         
@@ -208,20 +378,10 @@ def generate_streaming_tts(job_input: Dict[str, Any]) -> Dict[str, Any]:
         }
         
         # Handle voice cloning
-        temp_ref_path = None
-        if reference_audio_b64:
-            # Decode reference audio
-            reference_audio, ref_sr = base64_to_audio(reference_audio_b64)
-            
-            # Trim to max duration
-            max_samples = int(max_reference_duration_sec * ref_sr)
-            if len(reference_audio) > max_samples:
-                reference_audio = reference_audio[:max_samples]
-                logger.info(f"Trimmed reference audio to {max_reference_duration_sec} seconds")
-            
-            # Save temporarily for model usage
-            temp_ref_path = tempfile.mktemp(suffix='.wav')
-            sf.write(temp_ref_path, reference_audio, ref_sr)
+        temp_ref_path = handle_voice_cloning_source(job_input)
+        voice_cloning_enabled = temp_ref_path is not None
+        
+        if temp_ref_path:
             generation_params['audio_prompt_path'] = temp_ref_path
         
         # Generate audio using streaming method
@@ -255,7 +415,7 @@ def generate_streaming_tts(job_input: Dict[str, Any]) -> Dict[str, Any]:
         logger.info(f"Streaming TTS generation complete - Total chunks: {len(audio_chunks)}, Total time: {total_time:.3f}s")
         
         # Clean up temporary file
-        if temp_ref_path:
+        if temp_ref_path and temp_ref_path.startswith('/tmp/'):
             try:
                 Path(temp_ref_path).unlink()
             except:
@@ -279,7 +439,7 @@ def generate_streaming_tts(job_input: Dict[str, Any]) -> Dict[str, Any]:
                 "exaggeration": exaggeration,
                 "cfg_weight": cfg_weight,
                 "temperature": temperature,
-                "voice_cloning": reference_audio_b64 is not None
+                "voice_cloning": voice_cloning_enabled
             },
             "streaming_metrics": {
                 "total_chunks": len(audio_chunks),
@@ -456,7 +616,7 @@ def generate_tts(job_input: Dict[str, Any]) -> Dict[str, Any]:
         raise ValueError(f"Unknown mode: {mode}. Must be 'basic', 'streaming', or 'streaming_voice_cloning'")
 
 def handler(job):
-    """Main handler function for Runpod"""
+    """Main handler function for Runpod with voice library support"""
     try:
         # Load models if not already loaded
         if tts_model is None:
@@ -470,6 +630,48 @@ def handler(job):
         
         if operation == 'tts':
             return generate_tts(job_input)
+        elif operation == 'upload_voice':
+            return upload_voice_to_library(job_input)
+        elif operation == 'list_voices':
+            return {
+                "available_voices": list_available_voices(),
+                "total_voices": len(list_available_voices())
+            }
+        elif operation == 'list_local_voices':
+            # List voices from local embeddings
+            if local_voice_library and local_voice_library.is_available():
+                local_voices = local_voice_library.list_voices()
+                stats = local_voice_library.get_stats()
+                return {
+                    "local_voices": local_voices,
+                    "total_local_voices": len(local_voices),
+                    "stats": stats
+                }
+            else:
+                return {
+                    "error": "Local voice library not available",
+                    "message": "Run generate_local_embeddings.py first to create voice embeddings"
+                }
+        elif operation == 'search_local_voices':
+            # Search voices in local embeddings
+            if local_voice_library and local_voice_library.is_available():
+                query = job_input.get('query', '')
+                category = job_input.get('category', '')
+                speaker = job_input.get('speaker', '')
+                
+                results = local_voice_library.search_voices(query, category, speaker)
+                return {
+                    "search_results": results,
+                    "total_results": len(results),
+                    "query": query,
+                    "category": category,
+                    "speaker": speaker
+                }
+            else:
+                return {
+                    "error": "Local voice library not available",
+                    "message": "Run generate_local_embeddings.py first to create voice embeddings"
+                }
         else:
             raise ValueError(f"Unknown operation: {operation}")
             

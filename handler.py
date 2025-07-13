@@ -732,17 +732,19 @@ def generate_voice_conversion(job_input: Dict[str, Any]) -> Dict[str, Any]:
         
         # Load and resample input audio to S3_SR (16kHz)
         input_audio_16 = librosa.resample(input_audio_array, orig_sr=input_sr, target_sr=S3_SR)
-        input_audio_16 = torch.tensor(input_audio_16).float().to(device)[None, :]
         
         # Load and resample target audio to S3GEN_SR (24kHz), limit to 10 seconds
         target_audio_24 = librosa.resample(target_audio_array, orig_sr=target_sr, target_sr=S3GEN_SR)
         max_samples = S3GEN_SR * 10  # 10 seconds
         if len(target_audio_24) > max_samples:
             target_audio_24 = target_audio_24[:max_samples]
-        target_audio_24 = torch.tensor(target_audio_24).float()
         
-        # Use torch.no_grad() to avoid inference mode issues
+        # Use torch.no_grad() to avoid inference mode issues - wrap ALL tensor operations
         with torch.no_grad():
+            # Convert to tensors inside no_grad context
+            input_audio_16 = torch.tensor(input_audio_16).float().to(device)[None, :]
+            target_audio_24 = torch.tensor(target_audio_24).float()
+            
             # Tokenize input audio
             logger.info("Tokenizing input audio...")
             s3_tokens, _ = s3gen_model.tokenizer(input_audio_16)

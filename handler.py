@@ -739,21 +739,30 @@ def generate_voice_conversion(job_input: Dict[str, Any]) -> Dict[str, Any]:
         if len(target_audio_24) > max_samples:
             target_audio_24 = target_audio_24[:max_samples]
         
-        # Process audio for S3Gen model using the same pattern as other TTS functions
-        # Convert to tensors 
-        input_audio_16 = torch.tensor(input_audio_16).float().to(device)[None, :]
-        target_audio_24 = torch.tensor(target_audio_24).float().to(device)
+        # Process audio for S3Gen model - handle inference mode properly
+        # Convert to tensors and clone to avoid inference mode issues
+        input_audio_16 = torch.tensor(input_audio_16).float().to(device)[None, :].clone().detach()
+        target_audio_24 = torch.tensor(target_audio_24).float().to(device).clone().detach()
         
-        # Tokenize input audio
-        logger.info("Tokenizing input audio...")
-        s3_tokens, _ = s3gen_model.tokenizer(input_audio_16)
+        # Temporarily disable inference mode for S3Gen model
+        was_training = s3gen_model.training
+        s3gen_model.train()  # Set to training mode to allow inplace operations
         
-        # Generate voice conversion
-        logger.info("Generating voice conversion...")
-        converted_wav = s3gen_model(s3_tokens, target_audio_24, S3GEN_SR)
-        
-        # Use the same tensor handling pattern as process_audio_tensor
-        converted_wav = converted_wav.detach().cpu().numpy().flatten()
+        try:
+            # Tokenize input audio
+            logger.info("Tokenizing input audio...")
+            s3_tokens, _ = s3gen_model.tokenizer(input_audio_16)
+            
+            # Generate voice conversion
+            logger.info("Generating voice conversion...")
+            converted_wav = s3gen_model(s3_tokens, target_audio_24, S3GEN_SR)
+            
+            # Use the same tensor handling pattern as process_audio_tensor
+            converted_wav = converted_wav.detach().cpu().numpy().flatten()
+            
+        finally:
+            # Restore original training state
+            s3gen_model.train(was_training)
         
         # Apply watermark if requested
         no_watermark = job_input.get('no_watermark', False)

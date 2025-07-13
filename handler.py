@@ -12,6 +12,10 @@ from pathlib import Path
 from typing import Optional, Dict, Any, Generator, Tuple, List
 from chatterbox.tts import ChatterboxTTS
 
+# Import voice conversion models
+from chatterbox.models.s3tokenizer import S3_SR
+from chatterbox.models.s3gen import S3GEN_SR, S3Gen
+
 # Import local voice library
 from local_voice_library import initialize_local_voice_library, LocalVoiceLibrary
 
@@ -21,6 +25,7 @@ logger = logging.getLogger(__name__)
 
 # Global model variables
 tts_model: Optional[ChatterboxTTS] = None
+s3gen_model: Optional[S3Gen] = None
 local_voice_library: Optional[LocalVoiceLibrary] = None
 # Automatically detect the best available device
 if torch.cuda.is_available():
@@ -31,8 +36,8 @@ else:
     device = "cpu"
 
 def load_models():
-    """Load TTS model and voice library on startup"""
-    global tts_model, local_voice_library
+    """Load TTS model, voice conversion model, and voice library on startup"""
+    global tts_model, s3gen_model, local_voice_library
     
     logger.info(f"Loading models on device: {device}")
     
@@ -40,6 +45,24 @@ def load_models():
         logger.info("Loading ChatterboxTTS model...")
         tts_model = ChatterboxTTS.from_pretrained(device=device)
         logger.info("ChatterboxTTS model loaded successfully")
+        
+        # Load S3Gen model for voice conversion
+        logger.info("Loading S3Gen model for voice conversion...")
+        s3gen_model = S3Gen()
+        s3g_checkpoint = "checkpoints/s3gen.pt"
+        
+        # Determine map_location for loading
+        map_location = torch.device('cpu') if device in ['cpu', 'mps'] else None
+        
+        if Path(s3g_checkpoint).exists():
+            s3gen_model.load_state_dict(torch.load(s3g_checkpoint, map_location=map_location))
+            s3gen_model.to(device)
+            s3gen_model.eval()
+            logger.info("S3Gen model loaded successfully")
+        else:
+            logger.warning(f"S3Gen checkpoint not found at {s3g_checkpoint}")
+            logger.warning("Voice conversion will not be available")
+            s3gen_model = None
         
         # Initialize local voice library
         logger.info("Initializing local voice library...")
@@ -585,6 +608,131 @@ def generate_streaming_voice_cloning_tts(job_input: Dict[str, Any]) -> Dict[str,
         logger.error(f"Streaming voice cloning TTS generation failed: {e}")
         raise RuntimeError(f"Streaming voice cloning TTS generation failed: {str(e)}")
 
+def generate_voice_conversion(job_input: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Convert input audio to match target speaker voice using S3Gen model
+    
+    Args:
+        job_input: Dictionary containing:
+            - input_audio: Base64 encoded input audio to convert
+            - target_speaker: Base64 encoded target speaker reference OR voice_name from library
+            - voice_name: Optional voice name from voice library
+            - voice_id: Optional voice ID from voice library
+            - no_watermark: Optional boolean to skip watermarking
+    
+    Returns:
+        Dictionary with converted audio in base64 format
+    """
+    try:
+        # Check if S3Gen model is available
+        if s3gen_model is None:
+            return {
+                "error": "Voice conversion not available. S3Gen model not loaded.",
+                "message": "Make sure checkpoints/s3gen.pt exists on the server"
+            }
+        
+        # Get input audio
+        input_audio_b64 = job_input.get('input_audio')
+        if not input_audio_b64:
+            return {"error": "input_audio is required for voice conversion"}
+        
+        # Decode input audio
+        try:
+            input_audio_data = base64.b64decode(input_audio_b64)
+            input_audio_buffer = io.BytesIO(input_audio_data)
+            input_audio_array, input_sr = sf.read(input_audio_buffer)
+        except Exception as e:
+            return {"error": f"Failed to decode input audio: {str(e)}"}
+        
+        # Get target speaker reference
+        target_speaker_b64 = job_input.get('target_speaker')
+        voice_name = job_input.get('voice_name')
+        voice_id = job_input.get('voice_id')
+        
+        target_audio_array = None
+        
+        # Try to get target speaker from different sources
+        if target_speaker_b64:
+            # Use provided target speaker audio
+            try:
+                target_audio_data = base64.b64decode(target_speaker_b64)
+                target_audio_buffer = io.BytesIO(target_audio_data)
+                target_audio_array, target_sr = sf.read(target_audio_buffer)
+            except Exception as e:
+                return {"error": f"Failed to decode target speaker audio: {str(e)}"}
+        
+        elif voice_name or voice_id:
+            # Use voice from library
+            voice_reference = handle_voice_cloning_source(job_input)
+            if voice_reference:
+                try:
+                    target_audio_data = base64.b64decode(voice_reference)
+                    target_audio_buffer = io.BytesIO(target_audio_data)
+                    target_audio_array, target_sr = sf.read(target_audio_buffer)
+                except Exception as e:
+                    return {"error": f"Failed to decode library voice: {str(e)}"}
+            else:
+                return {"error": "Voice not found in library"}
+        
+        else:
+            return {"error": "target_speaker, voice_name, or voice_id is required"}
+        
+        # Process audio for S3Gen model
+        logger.info("Processing audio for voice conversion...")
+        
+        # Load and resample input audio to S3_SR (16kHz)
+        input_audio_16 = librosa.resample(input_audio_array, orig_sr=input_sr, target_sr=S3_SR)
+        input_audio_16 = torch.tensor(input_audio_16).float().to(device)[None, :]
+        
+        # Load and resample target audio to S3GEN_SR (24kHz), limit to 10 seconds
+        target_audio_24 = librosa.resample(target_audio_array, orig_sr=target_sr, target_sr=S3GEN_SR)
+        max_samples = S3GEN_SR * 10  # 10 seconds
+        if len(target_audio_24) > max_samples:
+            target_audio_24 = target_audio_24[:max_samples]
+        target_audio_24 = torch.tensor(target_audio_24).float()
+        
+        # Tokenize input audio
+        logger.info("Tokenizing input audio...")
+        s3_tokens, _ = s3gen_model.tokenizer(input_audio_16)
+        
+        # Generate voice conversion
+        logger.info("Generating voice conversion...")
+        converted_wav = s3gen_model(s3_tokens.to(device), target_audio_24.to(device), S3GEN_SR)
+        converted_wav = converted_wav.view(-1).cpu().numpy()
+        
+        # Apply watermark if requested
+        no_watermark = job_input.get('no_watermark', False)
+        if not no_watermark:
+            try:
+                import perth
+                watermarker = perth.PerthImplicitWatermarker()
+                converted_wav = watermarker.apply_watermark(converted_wav, sample_rate=S3GEN_SR)
+                logger.info("Watermark applied to converted audio")
+            except ImportError:
+                logger.warning("Perth watermarker not available, skipping watermark")
+            except Exception as e:
+                logger.warning(f"Failed to apply watermark: {e}")
+        
+        # Convert to base64
+        converted_audio_b64 = audio_to_base64(converted_wav, S3GEN_SR)
+        
+        # Calculate duration
+        duration = len(converted_wav) / S3GEN_SR
+        
+        logger.info(f"Voice conversion completed successfully. Duration: {duration:.2f}s")
+        
+        return {
+            "audio": converted_audio_b64,
+            "sample_rate": S3GEN_SR,
+            "duration": duration,
+            "format": "wav",
+            "model": "s3gen",
+            "operation": "voice_conversion"
+        }
+        
+    except Exception as e:
+        logger.error(f"Voice conversion failed: {e}")
+        return {"error": f"Voice conversion failed: {str(e)}"}
 
 
 def generate_tts(job_input: Dict[str, Any]) -> Dict[str, Any]:
@@ -657,6 +805,8 @@ def handler(job):
                     "error": "Local voice library not available",
                     "message": "Run generate_local_embeddings.py first to create voice embeddings"
                 }
+        elif operation == 'voice_conversion':
+            return generate_voice_conversion(job_input)
         else:
             raise ValueError(f"Unknown operation: {operation}")
             

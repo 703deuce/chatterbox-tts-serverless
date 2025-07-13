@@ -739,20 +739,21 @@ def generate_voice_conversion(job_input: Dict[str, Any]) -> Dict[str, Any]:
         if len(target_audio_24) > max_samples:
             target_audio_24 = target_audio_24[:max_samples]
         
-        # Use torch.no_grad() to avoid inference mode issues - wrap ALL tensor operations
-        with torch.no_grad():
-            # Convert to tensors inside no_grad context
-            input_audio_16 = torch.tensor(input_audio_16).float().to(device)[None, :]
-            target_audio_24 = torch.tensor(target_audio_24).float()
-            
-            # Tokenize input audio
-            logger.info("Tokenizing input audio...")
-            s3_tokens, _ = s3gen_model.tokenizer(input_audio_16)
-            
-            # Generate voice conversion
-            logger.info("Generating voice conversion...")
-            converted_wav = s3gen_model(s3_tokens.to(device), target_audio_24.to(device), S3GEN_SR)
-            converted_wav = converted_wav.view(-1).cpu().numpy()
+        # Process audio for S3Gen model using the same pattern as other TTS functions
+        # Convert to tensors 
+        input_audio_16 = torch.tensor(input_audio_16).float().to(device)[None, :]
+        target_audio_24 = torch.tensor(target_audio_24).float().to(device)
+        
+        # Tokenize input audio
+        logger.info("Tokenizing input audio...")
+        s3_tokens, _ = s3gen_model.tokenizer(input_audio_16)
+        
+        # Generate voice conversion
+        logger.info("Generating voice conversion...")
+        converted_wav = s3gen_model(s3_tokens, target_audio_24, S3GEN_SR)
+        
+        # Use the same tensor handling pattern as process_audio_tensor
+        converted_wav = converted_wav.detach().cpu().numpy().flatten()
         
         # Apply watermark if requested
         no_watermark = job_input.get('no_watermark', False)

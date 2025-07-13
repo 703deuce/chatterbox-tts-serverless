@@ -51,18 +51,36 @@ def load_models():
         s3gen_model = S3Gen()
         s3g_checkpoint = "checkpoints/s3gen.pt"
         
+        # Create checkpoints directory if it doesn't exist
+        Path("checkpoints").mkdir(exist_ok=True)
+        
         # Determine map_location for loading
         map_location = torch.device('cpu') if device in ['cpu', 'mps'] else None
         
         if Path(s3g_checkpoint).exists():
+            logger.info(f"Loading S3Gen model from {s3g_checkpoint}")
             s3gen_model.load_state_dict(torch.load(s3g_checkpoint, map_location=map_location))
             s3gen_model.to(device)
             s3gen_model.eval()
             logger.info("S3Gen model loaded successfully")
         else:
             logger.warning(f"S3Gen checkpoint not found at {s3g_checkpoint}")
-            logger.warning("Voice conversion will not be available")
-            s3gen_model = None
+            
+            # Try to download the model from the chatterbox-streaming repository
+            try:
+                import urllib.request
+                logger.info("Attempting to download S3Gen model...")
+                
+                # This is a placeholder - the actual download URL would need to be determined
+                # For now, we'll set s3gen_model to None
+                logger.warning("S3Gen model download not implemented yet")
+                logger.warning("Voice conversion will not be available")
+                s3gen_model = None
+                
+            except Exception as e:
+                logger.error(f"Failed to download S3Gen model: {e}")
+                logger.warning("Voice conversion will not be available")
+                s3gen_model = None
         
         # Initialize local voice library
         logger.info("Initializing local voice library...")
@@ -628,13 +646,30 @@ def generate_voice_conversion(job_input: Dict[str, Any]) -> Dict[str, Any]:
         if s3gen_model is None:
             return {
                 "error": "Voice conversion not available. S3Gen model not loaded.",
-                "message": "Make sure checkpoints/s3gen.pt exists on the server"
+                "message": "The S3Gen model checkpoint (checkpoints/s3gen.pt) is required for voice conversion.",
+                "instructions": [
+                    "1. Download the S3Gen model from the chatterbox-streaming repository",
+                    "2. Place it at: checkpoints/s3gen.pt",
+                    "3. Rebuild the RunPod container",
+                    "4. Alternative: Use the ChatterboxTTS voice cloning instead with operation: 'tts', mode: 'streaming_voice_cloning'"
+                ],
+                "alternative_tts": {
+                    "operation": "tts",
+                    "mode": "streaming_voice_cloning", 
+                    "text": "Your text here",
+                    "voice_name": "Amy",
+                    "chunk_size": 25,
+                    "exaggeration": 0.7
+                }
             }
         
         # Get input audio
         input_audio_b64 = job_input.get('input_audio')
         if not input_audio_b64:
-            return {"error": "input_audio is required for voice conversion"}
+            return {
+                "error": "input_audio is required for voice conversion",
+                "message": "Please provide the input audio as base64 encoded data"
+            }
         
         # Decode input audio
         try:
@@ -642,7 +677,10 @@ def generate_voice_conversion(job_input: Dict[str, Any]) -> Dict[str, Any]:
             input_audio_buffer = io.BytesIO(input_audio_data)
             input_audio_array, input_sr = sf.read(input_audio_buffer)
         except Exception as e:
-            return {"error": f"Failed to decode input audio: {str(e)}"}
+            return {
+                "error": f"Failed to decode input audio: {str(e)}",
+                "message": "Please ensure input_audio is valid base64 encoded audio data"
+            }
         
         # Get target speaker reference
         target_speaker_b64 = job_input.get('target_speaker')
@@ -659,7 +697,10 @@ def generate_voice_conversion(job_input: Dict[str, Any]) -> Dict[str, Any]:
                 target_audio_buffer = io.BytesIO(target_audio_data)
                 target_audio_array, target_sr = sf.read(target_audio_buffer)
             except Exception as e:
-                return {"error": f"Failed to decode target speaker audio: {str(e)}"}
+                return {
+                    "error": f"Failed to decode target speaker audio: {str(e)}",
+                    "message": "Please ensure target_speaker is valid base64 encoded audio data"
+                }
         
         elif voice_name or voice_id:
             # Use voice from library
@@ -670,12 +711,21 @@ def generate_voice_conversion(job_input: Dict[str, Any]) -> Dict[str, Any]:
                     target_audio_buffer = io.BytesIO(target_audio_data)
                     target_audio_array, target_sr = sf.read(target_audio_buffer)
                 except Exception as e:
-                    return {"error": f"Failed to decode library voice: {str(e)}"}
+                    return {
+                        "error": f"Failed to decode library voice: {str(e)}",
+                        "message": "Voice library returned invalid audio data"
+                    }
             else:
-                return {"error": "Voice not found in library"}
+                return {
+                    "error": "Voice not found in library",
+                    "message": f"Voice '{voice_name or voice_id}' not found. Use list_local_voices operation to see available voices."
+                }
         
         else:
-            return {"error": "target_speaker, voice_name, or voice_id is required"}
+            return {
+                "error": "target_speaker, voice_name, or voice_id is required",
+                "message": "Please provide either target_speaker (base64 audio), voice_name, or voice_id"
+            }
         
         # Process audio for S3Gen model
         logger.info("Processing audio for voice conversion...")
@@ -732,7 +782,10 @@ def generate_voice_conversion(job_input: Dict[str, Any]) -> Dict[str, Any]:
         
     except Exception as e:
         logger.error(f"Voice conversion failed: {e}")
-        return {"error": f"Voice conversion failed: {str(e)}"}
+        return {
+            "error": f"Voice conversion failed: {str(e)}",
+            "message": "An unexpected error occurred during voice conversion"
+        }
 
 
 def generate_tts(job_input: Dict[str, Any]) -> Dict[str, Any]:

@@ -40,6 +40,12 @@ RUN pip install --no-cache-dir -r requirements.txt
 RUN python3 -c "import chatterbox; print('✅ chatterbox imported successfully')" || echo "❌ chatterbox import failed"
 RUN pip show chatterbox-tts || echo "❌ chatterbox-tts not found in pip list"
 
+# Create checkpoints directory and download S3Gen model
+RUN mkdir -p checkpoints
+RUN echo "Downloading S3Gen model checkpoint (approx 1.06 GB)..."
+RUN wget -O checkpoints/s3gen.pt https://huggingface.co/ResembleAI/chatterbox/resolve/main/s3gen.pt
+RUN echo "S3Gen model download completed. File size:" && ls -lh checkpoints/s3gen.pt
+
 # Copy application code
 COPY . .
 

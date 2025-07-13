@@ -741,14 +741,16 @@ def generate_voice_conversion(job_input: Dict[str, Any]) -> Dict[str, Any]:
             target_audio_24 = target_audio_24[:max_samples]
         target_audio_24 = torch.tensor(target_audio_24).float()
         
-        # Tokenize input audio
-        logger.info("Tokenizing input audio...")
-        s3_tokens, _ = s3gen_model.tokenizer(input_audio_16)
-        
-        # Generate voice conversion
-        logger.info("Generating voice conversion...")
-        converted_wav = s3gen_model(s3_tokens.to(device), target_audio_24.to(device), S3GEN_SR)
-        converted_wav = converted_wav.view(-1).cpu().numpy()
+        # Use torch.no_grad() to avoid inference mode issues
+        with torch.no_grad():
+            # Tokenize input audio
+            logger.info("Tokenizing input audio...")
+            s3_tokens, _ = s3gen_model.tokenizer(input_audio_16)
+            
+            # Generate voice conversion
+            logger.info("Generating voice conversion...")
+            converted_wav = s3gen_model(s3_tokens.to(device), target_audio_24.to(device), S3GEN_SR)
+            converted_wav = converted_wav.view(-1).cpu().numpy()
         
         # Apply watermark if requested
         no_watermark = job_input.get('no_watermark', False)

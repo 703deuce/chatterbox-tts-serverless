@@ -16,7 +16,7 @@ https://api.runpod.ai/v2/c2wmx1ln5ccp6c/run
 All requests require Bearer token authentication:
 
 ```bash
-Authorization: Bearer rpa_C55TBQG7H6FM7G3Q7A6JM7ZJCDKA3I2J3EO0TAH8fxyddo
+Authorization: Bearer YOUR_API_KEY
 Content-Type: application/json
 ```
 
@@ -40,7 +40,7 @@ import base64
 def call_tts_api(text, voice_name="Amy"):
     url = "https://api.runpod.ai/v2/c2wmx1ln5ccp6c/run"
     headers = {
-        "Authorization": "Bearer rpa_C55TBQG7H6FM7G3Q7A6JM7ZJCDKA3I2J3EO0TAH8fxyddo",
+        "Authorization": "Bearer YOUR_API_KEY",
         "Content-Type": "application/json"
     }
     
@@ -85,7 +85,7 @@ const fs = require('fs');
 async function callTtsApi(text, voiceName = 'Amy') {
     const url = 'https://api.runpod.ai/v2/c2wmx1ln5ccp6c/run';
     const headers = {
-        'Authorization': 'Bearer rpa_C55TBQG7H6FM7G3Q7A6JM7ZJCDKA3I2J3EO0TAH8fxyddo',
+        'Authorization': 'Bearer YOUR_API_KEY',
         'Content-Type': 'application/json'
     };
     
@@ -345,7 +345,7 @@ def convert_voice(input_audio_file, target_voice_name):
     
     url = "https://api.runpod.ai/v2/c2wmx1ln5ccp6c/run"
     headers = {
-        "Authorization": "Bearer rpa_C55TBQG7H6FM7G3Q7A6JM7ZJCDKA3I2J3EO0TAH8fxyddo",
+        "Authorization": "Bearer YOUR_API_KEY",
         "Content-Type": "application/json"
     }
     
@@ -398,7 +398,7 @@ AUDIO_B64=$(base64 -w 0 input_audio.wav)
 
 # Step 2: Submit conversion job
 JOB_RESPONSE=$(curl -X POST "https://api.runpod.ai/v2/c2wmx1ln5ccp6c/run" \
-  -H "Authorization: Bearer rpa_C55TBQG7H6FM7G3Q7A6JM7ZJCDKA3I2J3EO0TAH8fxyddo" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
   -H "Content-Type: application/json" \
   -d "{
     \"input\": {
@@ -412,7 +412,7 @@ JOB_RESPONSE=$(curl -X POST "https://api.runpod.ai/v2/c2wmx1ln5ccp6c/run" \
 JOB_ID=$(echo $JOB_RESPONSE | jq -r '.id')
 
 # Step 3: Check status and get result
-curl -H "Authorization: Bearer rpa_C55TBQG7H6FM7G3Q7A6JM7ZJCDKA3I2J3EO0TAH8fxyddo" \
+curl -H "Authorization: Bearer YOUR_API_KEY" \
   "https://api.runpod.ai/v2/c2wmx1ln5ccp6c/status/$JOB_ID"
 ```
 

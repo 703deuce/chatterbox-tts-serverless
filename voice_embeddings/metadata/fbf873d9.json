@@ -1,0 +1,11 @@
+{
+  "voice_id": "fbf873d9",
+  "speaker_name": "Brittany",
+  "gender": "female",
+  "original_file": "clip-Brittany - Female, young, American friendly digital assistant-2025_07_26.wav",
+  "embedding_file": "fbf873d9.pkl.gz",
+  "duration": 21.3565,
+  "sample_rate": 24000,
+  "created_at": "2025-07-27T14:07:55.311676",
+  "type": "chattts_embedding"
+}

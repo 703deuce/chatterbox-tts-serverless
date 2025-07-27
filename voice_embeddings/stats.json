@@ -1,17 +1,5 @@
 {
-  "total_voices": 120,
-  "failed_voices": 0,
-  "total_files": 120,
-  "categories": {
-    "female": 62,
-    "male": 58
-  },
-  "storage": {
-    "original_size_mb": 326.72197341918945,
-    "compressed_size_mb": 351.827600479126,
-    "compression_ratio": "0.93x",
-    "space_saved_mb": -25.105627059936523
-  },
-  "generated_at": "2025-07-11T05:21:52.346317",
-  "version": "local_v1.0"
+  "total_voices": 37,
+  "generation_time": 26.726486,
+  "average_duration": 22.811666666666667
 }

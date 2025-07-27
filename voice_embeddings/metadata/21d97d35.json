@@ -1,0 +1,11 @@
+{
+  "voice_id": "21d97d35",
+  "speaker_name": "Christine",
+  "gender": "female",
+  "original_file": "clip-Christine - tiktok voiceover female -2025_07_27.wav",
+  "embedding_file": "21d97d35.pkl.gz",
+  "duration": 21.0765,
+  "sample_rate": 24000,
+  "created_at": "2025-07-27T14:07:59.221884",
+  "type": "chattts_embedding"
+}

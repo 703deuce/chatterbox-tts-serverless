@@ -1,0 +1,11 @@
+{
+  "voice_id": "9149e5c4",
+  "speaker_name": "Brenda",
+  "gender": "female",
+  "original_file": "clip-Brenda - Female, gentle meditation guide-2025_07_26.wav",
+  "embedding_file": "9149e5c4.pkl.gz",
+  "duration": 26.6085,
+  "sample_rate": 24000,
+  "created_at": "2025-07-27T14:07:54.353627",
+  "type": "chattts_embedding"
+}

@@ -1,0 +1,11 @@
+{
+  "voice_id": "a242b301",
+  "speaker_name": "Benjamin",
+  "gender": "male",
+  "original_file": "clip-Benjamin - Male, Texas southern storyteller-2025_07_26.wav",
+  "embedding_file": "a242b301.pkl.gz",
+  "duration": 26.8885,
+  "sample_rate": 24000,
+  "created_at": "2025-07-27T14:07:51.961773",
+  "type": "chattts_embedding"
+}

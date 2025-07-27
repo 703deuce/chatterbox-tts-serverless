@@ -1,0 +1,11 @@
+{
+  "voice_id": "481f4a93",
+  "speaker_name": "Abigail",
+  "gender": "female",
+  "original_file": "Abigail - female , reader.wav",
+  "embedding_file": "481f4a93.pkl.gz",
+  "duration": 20.38,
+  "sample_rate": 24000,
+  "created_at": "2025-07-27T14:07:35.604756",
+  "type": "chattts_embedding"
+}

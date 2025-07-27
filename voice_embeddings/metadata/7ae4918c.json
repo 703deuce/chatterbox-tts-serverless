@@ -1,0 +1,11 @@
+{
+  "voice_id": "7ae4918c",
+  "speaker_name": "Adrian",
+  "gender": "male",
+  "original_file": "clip-Adrian -  Male, deep-voiced US movie trailer narrator-2025_07_26.wav",
+  "embedding_file": "7ae4918c.pkl.gz",
+  "duration": 24.0425,
+  "sample_rate": 24000,
+  "created_at": "2025-07-27T14:07:38.173223",
+  "type": "chattts_embedding"
+}

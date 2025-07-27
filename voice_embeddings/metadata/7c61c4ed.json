@@ -1,0 +1,11 @@
+{
+  "voice_id": "7c61c4ed",
+  "speaker_name": "Amanda",
+  "gender": "female",
+  "original_file": "clip-Amanda - Elderly female, British RP storyteller-2025_07_26.wav",
+  "embedding_file": "7c61c4ed.pkl.gz",
+  "duration": 30.8205,
+  "sample_rate": 24000,
+  "created_at": "2025-07-27T14:07:41.580285",
+  "type": "chattts_embedding"
+}

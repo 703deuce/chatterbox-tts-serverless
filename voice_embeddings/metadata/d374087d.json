@@ -1,0 +1,11 @@
+{
+  "voice_id": "d374087d",
+  "speaker_name": "Adam",
+  "gender": "male",
+  "original_file": "Adam - male, american.wav",
+  "embedding_file": "d374087d.pkl.gz",
+  "duration": 22.26,
+  "sample_rate": 24000,
+  "created_at": "2025-07-27T14:07:36.855800",
+  "type": "chattts_embedding"
+}

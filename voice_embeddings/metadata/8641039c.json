@@ -1,0 +1,11 @@
+{
+  "voice_id": "8641039c",
+  "speaker_name": "Andrew",
+  "gender": "male",
+  "original_file": "clip-Andrew - Male, New Yorker-2025_07_27.wav",
+  "embedding_file": "8641039c.pkl.gz",
+  "duration": 22.2365,
+  "sample_rate": 24000,
+  "created_at": "2025-07-27T14:07:43.414327",
+  "type": "chattts_embedding"
+}

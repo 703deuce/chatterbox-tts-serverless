@@ -1,0 +1,11 @@
+{
+  "voice_id": "42a8ac8a",
+  "speaker_name": "Catherine",
+  "gender": "female",
+  "original_file": "clip-Catherine - Tv Ads voiceover female-2025_07_27.wav",
+  "embedding_file": "42a8ac8a.pkl.gz",
+  "duration": 21.5565,
+  "sample_rate": 24000,
+  "created_at": "2025-07-27T14:07:57.656729",
+  "type": "chattts_embedding"
+}

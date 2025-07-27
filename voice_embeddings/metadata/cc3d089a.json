@@ -1,0 +1,11 @@
+{
+  "voice_id": "cc3d089a",
+  "speaker_name": "Christopher",
+  "gender": "male",
+  "original_file": "clip-Christopher - male, wise storyteller-2025_07_26.wav",
+  "embedding_file": "cc3d089a.pkl.gz",
+  "duration": 22.2365,
+  "sample_rate": 24000,
+  "created_at": "2025-07-27T14:07:59.610979",
+  "type": "chattts_embedding"
+}

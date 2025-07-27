@@ -1,0 +1,11 @@
+{
+  "voice_id": "49a11394",
+  "speaker_name": "Arthur",
+  "gender": "male",
+  "original_file": "clip-Arthur - Male, South African radio morning host-2025_07_27.wav",
+  "embedding_file": "49a11394.pkl.gz",
+  "duration": 21.6365,
+  "sample_rate": 24000,
+  "created_at": "2025-07-27T14:07:49.894470",
+  "type": "chattts_embedding"
+}

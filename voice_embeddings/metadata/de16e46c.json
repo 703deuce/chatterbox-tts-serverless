@@ -1,0 +1,11 @@
+{
+  "voice_id": "de16e46c",
+  "speaker_name": "Amy",
+  "gender": "female",
+  "original_file": "clip-Amy - Female Southern drawl-2025_07_27.wav",
+  "embedding_file": "de16e46c.pkl.gz",
+  "duration": 21.8765,
+  "sample_rate": 24000,
+  "created_at": "2025-07-27T14:07:42.045343",
+  "type": "chattts_embedding"
+}

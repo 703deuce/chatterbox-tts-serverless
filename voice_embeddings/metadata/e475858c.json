@@ -1,0 +1,11 @@
+{
+  "voice_id": "e475858c",
+  "speaker_name": "Austin",
+  "gender": "male",
+  "original_file": "clip-Austin - Male, Standard American audiobook narrator-2025_07_27.wav",
+  "embedding_file": "e475858c.pkl.gz",
+  "duration": 22.6365,
+  "sample_rate": 24000,
+  "created_at": "2025-07-27T14:07:50.937658",
+  "type": "chattts_embedding"
+}

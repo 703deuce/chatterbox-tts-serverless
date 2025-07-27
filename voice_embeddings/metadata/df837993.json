@@ -1,0 +1,11 @@
+{
+  "voice_id": "df837993",
+  "speaker_name": "Alex",
+  "gender": "male",
+  "original_file": "clip-Alex - Male, Chicago jazz radio DJ-2025_07_27.wav",
+  "embedding_file": "df837993.pkl.gz",
+  "duration": 21.1565,
+  "sample_rate": 24000,
+  "created_at": "2025-07-27T14:07:40.478869",
+  "type": "chattts_embedding"
+}

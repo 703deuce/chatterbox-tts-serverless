@@ -1,0 +1,11 @@
+{
+  "voice_id": "50788c78",
+  "speaker_name": "Alan",
+  "gender": "male",
+  "original_file": "clip-Alan - Boy, charismatic audiobook narrator-2025_07_26(1).wav",
+  "embedding_file": "50788c78.pkl.gz",
+  "duration": 26.9285,
+  "sample_rate": 24000,
+  "created_at": "2025-07-27T14:07:39.197185",
+  "type": "chattts_embedding"
+}

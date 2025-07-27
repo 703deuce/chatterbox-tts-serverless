@@ -1,0 +1,11 @@
+{
+  "voice_id": "ca6d86ac",
+  "speaker_name": "Brandon",
+  "gender": "male",
+  "original_file": "clip-Brandon - Male, cheerful California podcast host-2025_07_26.wav",
+  "embedding_file": "ca6d86ac.pkl.gz",
+  "duration": 21.8765,
+  "sample_rate": 24000,
+  "created_at": "2025-07-27T14:07:53.807385",
+  "type": "chattts_embedding"
+}

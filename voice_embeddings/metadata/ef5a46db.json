@@ -1,0 +1,11 @@
+{
+  "voice_id": "ef5a46db",
+  "speaker_name": "Charles",
+  "gender": "male",
+  "original_file": "clip-Charles - enthusiastic Frenchman-2025_07_27.wav",
+  "embedding_file": "ef5a46db.pkl.gz",
+  "duration": 23.4025,
+  "sample_rate": 24000,
+  "created_at": "2025-07-27T14:07:58.037147",
+  "type": "chattts_embedding"
+}

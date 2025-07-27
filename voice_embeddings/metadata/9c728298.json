@@ -1,0 +1,11 @@
+{
+  "voice_id": "9c728298",
+  "speaker_name": "Brian",
+  "gender": "male",
+  "original_file": "clip-Brian - Male, crisp British professor-2025_07_26.wav",
+  "embedding_file": "9c728298.pkl.gz",
+  "duration": 21.9565,
+  "sample_rate": 24000,
+  "created_at": "2025-07-27T14:07:54.893703",
+  "type": "chattts_embedding"
+}

@@ -1,0 +1,11 @@
+{
+  "voice_id": "02c67e2c",
+  "speaker_name": "Barbara",
+  "gender": "female",
+  "original_file": "clip-Barbara - Female, Italian-English opera announcer-2025_07_27.wav",
+  "embedding_file": "02c67e2c.pkl.gz",
+  "duration": 22.3165,
+  "sample_rate": 24000,
+  "created_at": "2025-07-27T14:07:51.419317",
+  "type": "chattts_embedding"
+}

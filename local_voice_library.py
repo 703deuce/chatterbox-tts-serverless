@@ -25,6 +25,7 @@ class LocalVoiceLibrary:
         self.embeddings_dir = Path(embeddings_dir)
         self.voice_catalog = {}
         self.quick_index = {}
+        self.name_mapping = {}
         self.stats = {}
         
         # Load voice library
@@ -51,6 +52,12 @@ class LocalVoiceLibrary:
                 with open(index_file, 'r') as f:
                     self.quick_index = json.load(f)
             
+            # Load name mapping (for optimized lookup)
+            name_mapping_file = self.embeddings_dir / "name_mapping.json"
+            if name_mapping_file.exists():
+                with open(name_mapping_file, 'r') as f:
+                    self.name_mapping = json.load(f)
+            
             # Load stats
             stats_file = self.embeddings_dir / "stats.json"
             if stats_file.exists():
@@ -66,17 +73,25 @@ class LocalVoiceLibrary:
         """List all available voices"""
         voices = []
         for voice_id, metadata in self.voice_catalog.items():
-            voices.append({
+            # Handle both old and new metadata structures
+            voice_data = {
                 'voice_id': voice_id,
-                'name': metadata['name'],
-                'description': metadata['description'],
-                'category': metadata['category'],
-                'speaker_name': metadata['speaker_name'],
-                'duration': metadata['duration'],
-                'file_size': metadata['file_size'],
-                'compressed_size': metadata['compressed_size'],
-                'compression_ratio': metadata['compression_ratio']
-            })
+                'speaker_name': metadata.get('speaker_name', 'Unknown'),
+                'gender': metadata.get('gender', 'unknown'),
+                'duration': metadata.get('duration', 0),
+                'original_file': metadata.get('original_file', ''),
+                'type': metadata.get('type', 'embedding')
+            }
+            
+            # Legacy compatibility
+            if 'name' in metadata:
+                voice_data['name'] = metadata['name']
+            if 'description' in metadata:
+                voice_data['description'] = metadata['description']
+            if 'category' in metadata:
+                voice_data['category'] = metadata['category']
+            
+            voices.append(voice_data)
         return voices
     
     def get_voice_info(self, voice_id: str) -> Optional[Dict[str, Any]]:
@@ -99,8 +114,17 @@ class LocalVoiceLibrary:
                 return None
             
             voice_info = self.voice_catalog[voice_id]
+            
+            # Determine embedding file path
+            if 'embedding_file' in voice_info:
+                # New ChatTTS structure
+                embedding_path = voice_info['embedding_file']
+            else:
+                # Fallback: construct path from voice_id
+                embedding_path = f"embeddings/{voice_id}.pkl.gz"
+            
             # Normalize path separators for cross-platform compatibility
-            embedding_path = voice_info['embedding_file'].replace('\\', '/')
+            embedding_path = embedding_path.replace('\\', '/')
             embedding_file = self.embeddings_dir / embedding_path
             
             # Load compressed audio
@@ -108,12 +132,19 @@ class LocalVoiceLibrary:
                 logger.error(f"Embedding file not found: {embedding_file}")
                 return None
             
-            with open(embedding_file, 'rb') as f:
-                compressed_data = f.read()
+            with gzip.open(embedding_file, 'rb') as f:
+                embedding_data = pickle.load(f)
             
-            # Decompress and unpickle
-            decompressed_data = gzip.decompress(compressed_data)
-            audio_array = pickle.loads(decompressed_data)
+            # Handle different embedding formats
+            if isinstance(embedding_data, dict) and 'audio' in embedding_data:
+                # New ChatTTS format: extract audio array from dict
+                audio_array = embedding_data['audio']
+            elif isinstance(embedding_data, np.ndarray):
+                # Legacy format: direct audio array
+                audio_array = embedding_data
+            else:
+                logger.error(f"Unknown embedding format for voice {voice_id}")
+                return None
             
             logger.info(f"Loaded voice {voice_id}: {audio_array.shape} samples")
             return audio_array
@@ -138,30 +169,42 @@ class LocalVoiceLibrary:
             return None
     
     def find_voice_id_by_name(self, voice_name: str) -> Optional[str]:
-        """Find voice ID by name (prioritizes speaker name matching)"""
+        """Find voice ID by name (prioritizes optimized name mapping then speaker name matching)"""
         try:
             # Normalize the search name
-            search_name = voice_name.lower().strip()
+            search_name = voice_name.strip()
+            search_name_lower = search_name.lower()
             
-            # First priority: exact speaker name match (e.g., "Amy" matches "Amy")
-            for voice_id, metadata in self.voice_catalog.items():
-                if metadata['speaker_name'].lower() == search_name:
+            # First priority: direct name mapping lookup (fastest)
+            if search_name in self.name_mapping:
+                return self.name_mapping[search_name]
+            
+            # Second priority: case-insensitive name mapping lookup
+            for name, voice_id in self.name_mapping.items():
+                if name.lower() == search_name_lower:
                     return voice_id
             
-            # Second priority: exact full name match (e.g., "female/Amy")
+            # Third priority: exact speaker name match (e.g., "Amy" matches "Amy")
             for voice_id, metadata in self.voice_catalog.items():
-                if metadata['name'].lower() == search_name:
+                speaker_name = metadata.get('speaker_name', '')
+                if speaker_name.lower() == search_name_lower:
                     return voice_id
             
-            # Third priority: partial matches
+            # Fourth priority: legacy full name match (for backwards compatibility)
             for voice_id, metadata in self.voice_catalog.items():
-                voice_full_name = metadata['name'].lower()
-                speaker_name = metadata['speaker_name'].lower()
+                name = metadata.get('name', '')
+                if name.lower() == search_name_lower:
+                    return voice_id
+            
+            # Fifth priority: partial matches
+            for voice_id, metadata in self.voice_catalog.items():
+                speaker_name = metadata.get('speaker_name', '').lower()
+                name = metadata.get('name', '').lower()
                 
                 # Check if search matches any part of the names
-                if (search_name in voice_full_name or 
-                    search_name in speaker_name or
-                    voice_full_name.endswith(search_name)):
+                if (search_name_lower in speaker_name or 
+                    search_name_lower in name or
+                    speaker_name.startswith(search_name_lower)):
                     return voice_id
             
             return None
@@ -190,42 +233,62 @@ class LocalVoiceLibrary:
             logger.error(f"Failed to convert voice {voice_id} to base64: {e}")
             return None
     
-    def search_voices(self, query: str = "", category: str = "", speaker: str = "") -> List[Dict[str, Any]]:
-        """Search voices by query, category, or speaker"""
+    def search_voices(self, query: str = "", category: str = "", speaker: str = "", gender: str = "") -> List[Dict[str, Any]]:
+        """Search voices by query, category, speaker, or gender"""
         results = []
         
         for voice_id, metadata in self.voice_catalog.items():
             # Apply filters
-            if category and metadata['category'].lower() != category.lower():
+            if category and metadata.get('category', '').lower() != category.lower():
                 continue
             
-            if speaker and speaker.lower() not in metadata['speaker_name'].lower():
+            if gender and metadata.get('gender', '').lower() != gender.lower():
+                continue
+            
+            if speaker and speaker.lower() not in metadata.get('speaker_name', '').lower():
                 continue
             
             if query:
-                # Search in name, description, speaker name
-                searchable_text = f"{metadata['name']} {metadata['description']} {metadata['speaker_name']}".lower()
+                # Search in speaker name, description, original file
+                searchable_text = f"{metadata.get('speaker_name', '')} {metadata.get('description', '')} {metadata.get('original_file', '')}".lower()
                 if query.lower() not in searchable_text:
                     continue
             
-            results.append({
+            result = {
                 'voice_id': voice_id,
-                'name': metadata['name'],
-                'description': metadata['description'],
-                'category': metadata['category'],
-                'speaker_name': metadata['speaker_name'],
-                'duration': metadata['duration']
-            })
+                'speaker_name': metadata.get('speaker_name', 'Unknown'),
+                'gender': metadata.get('gender', 'unknown'),
+                'duration': metadata.get('duration', 0),
+                'original_file': metadata.get('original_file', ''),
+                'type': metadata.get('type', 'embedding')
+            }
+            
+            # Legacy compatibility
+            if 'name' in metadata:
+                result['name'] = metadata['name']
+            if 'description' in metadata:
+                result['description'] = metadata['description']
+            if 'category' in metadata:
+                result['category'] = metadata['category']
+            
+            results.append(result)
         
         return results
     
     def get_stats(self) -> Dict[str, Any]:
         """Get voice library statistics"""
+        # Calculate gender distribution
+        gender_counts = {}
+        for metadata in self.voice_catalog.values():
+            gender = metadata.get('gender', 'unknown')
+            gender_counts[gender] = gender_counts.get(gender, 0) + 1
+        
         return {
             'total_voices': len(self.voice_catalog),
-            'categories': self.stats.get('categories', {}),
-            'storage': self.stats.get('storage', {}),
-            'version': self.stats.get('version', 'unknown')
+            'gender_distribution': gender_counts,
+            'generation_time': self.stats.get('generation_time'),
+            'average_duration': self.stats.get('average_duration'),
+            'type': 'chattts_embeddings'
         }
     
     def is_available(self) -> bool:
@@ -248,24 +311,24 @@ if __name__ == "__main__":
         # Show stats
         stats = library.get_stats()
         print(f"📊 Total voices: {stats['total_voices']}")
-        print(f"📂 Categories: {list(stats['categories'].keys())}")
+        print(f"👥 Gender distribution: {stats['gender_distribution']}")
         
         # List first few voices
         voices = library.list_voices()[:5]
         print(f"\n🎤 Sample voices:")
         for voice in voices:
-            print(f"  • {voice['voice_id']}: {voice['name']} ({voice['category']})")
+            print(f"  • {voice['voice_id']}: {voice['speaker_name']} ({voice['gender']})")
         
-        # Test loading a voice
+        # Test loading a voice by name
         if voices:
-            test_voice_id = voices[0]['voice_id']
-            print(f"\n🧪 Testing voice load: {test_voice_id}")
+            test_name = voices[0]['speaker_name']
+            print(f"\n🧪 Testing voice load by name: {test_name}")
             
-            audio = library.get_voice_audio(test_voice_id)
+            audio = library.get_voice_audio_by_name(test_name)
             if audio is not None:
                 print(f"✅ Successfully loaded: {audio.shape} samples")
             else:
                 print("❌ Failed to load voice")
     else:
         print("❌ No local voice library found")
-        print("Run generate_local_embeddings.py first to create embeddings") 
+        print("Run generate_chattts_embeddings.py first to create embeddings") 

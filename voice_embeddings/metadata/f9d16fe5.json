@@ -1,0 +1,11 @@
+{
+  "voice_id": "f9d16fe5",
+  "speaker_name": "Betty",
+  "gender": "female",
+  "original_file": "clip-Betty - Female, NYC legal advisor (stern, fast-talking)-2025_07_27.wav",
+  "embedding_file": "f9d16fe5.pkl.gz",
+  "duration": 22.0365,
+  "sample_rate": 24000,
+  "created_at": "2025-07-27T14:07:52.456955",
+  "type": "chattts_embedding"
+}

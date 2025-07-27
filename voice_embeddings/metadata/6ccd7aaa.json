@@ -1,0 +1,11 @@
+{
+  "voice_id": "6ccd7aaa",
+  "speaker_name": "Christian",
+  "gender": "male",
+  "original_file": "clip-Christian - male, energetic game show host-2025_07_26.wav",
+  "embedding_file": "6ccd7aaa.pkl.gz",
+  "duration": 22.919166666666666,
+  "sample_rate": 24000,
+  "created_at": "2025-07-27T14:07:58.441772",
+  "type": "chattts_embedding"
+}

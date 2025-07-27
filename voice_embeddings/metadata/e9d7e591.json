@@ -1,0 +1,11 @@
+{
+  "voice_id": "e9d7e591",
+  "speaker_name": "Albert",
+  "gender": "male",
+  "original_file": "clip-Albert - Male, Boston sports talk host-2025_07_26.wav",
+  "embedding_file": "e9d7e591.pkl.gz",
+  "duration": 25.3685,
+  "sample_rate": 24000,
+  "created_at": "2025-07-27T14:07:39.880408",
+  "type": "chattts_embedding"
+}

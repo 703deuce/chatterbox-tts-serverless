@@ -1,0 +1,11 @@
+{
+  "voice_id": "42440412",
+  "speaker_name": "Bryan",
+  "gender": "male",
+  "original_file": "clip-Bryan - Tv Ads voiceover male-2025_07_27.wav",
+  "embedding_file": "42440412.pkl.gz",
+  "duration": 18.1165,
+  "sample_rate": 24000,
+  "created_at": "2025-07-27T14:07:56.029239",
+  "type": "chattts_embedding"
+}

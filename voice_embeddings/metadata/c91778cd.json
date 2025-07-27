@@ -1,0 +1,11 @@
+{
+  "voice_id": "c91778cd",
+  "speaker_name": "Anna",
+  "gender": "female",
+  "original_file": "clip-Anna - Female, Cockney London tour guide-2025_07_26.wav",
+  "embedding_file": "c91778cd.pkl.gz",
+  "duration": 23.26,
+  "sample_rate": 24000,
+  "created_at": "2025-07-27T14:07:47.697293",
+  "type": "chattts_embedding"
+}

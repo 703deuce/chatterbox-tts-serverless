@@ -1,0 +1,11 @@
+{
+  "voice_id": "025ab334",
+  "speaker_name": "Bruce",
+  "gender": "male",
+  "original_file": "clip-Bruce - Male, posh British game show host-2025_07_27.wav",
+  "embedding_file": "025ab334.pkl.gz",
+  "duration": 22.0025,
+  "sample_rate": 24000,
+  "created_at": "2025-07-27T14:07:55.721467",
+  "type": "chattts_embedding"
+}

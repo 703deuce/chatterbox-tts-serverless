@@ -1,0 +1,11 @@
+{
+  "voice_id": "777ea5b5",
+  "speaker_name": "Carol",
+  "gender": "female",
+  "original_file": "clip-Carol - Female, youth-2025_07_27.wav",
+  "embedding_file": "777ea5b5.pkl.gz",
+  "duration": 20.9165,
+  "sample_rate": 24000,
+  "created_at": "2025-07-27T14:07:56.826930",
+  "type": "chattts_embedding"
+}

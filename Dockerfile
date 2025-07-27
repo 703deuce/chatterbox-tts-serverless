@@ -1,8 +1,8 @@
 # Use NVIDIA CUDA base image
 FROM nvidia/cuda:11.8.0-devel-ubuntu22.04
 
-# Cachebuster to force fresh builds
-ARG CACHEBUSTER=1
+# Cachebuster to force fresh builds - Updated for new voice embeddings
+ARG CACHEBUSTER=2025012700
 
 # Set environment variables
 ENV DEBIAN_FRONTEND=noninteractive
@@ -48,6 +48,10 @@ RUN echo "S3Gen model download completed. File size:" && ls -lh checkpoints/s3ge
 
 # Copy application code
 COPY . .
+
+# Force fresh copy of voice embeddings (cache-busting for voice library updates)
+ARG VOICE_EMBEDDINGS_VERSION=a42e2c6
+RUN echo "Voice embeddings version: $VOICE_EMBEDDINGS_VERSION" > /workspace/voice_embeddings_version.txt
 
 # Expose port
 EXPOSE 8000

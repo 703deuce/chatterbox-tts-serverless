@@ -707,13 +707,13 @@ def generate_voice_conversion(job_input: Dict[str, Any]) -> Dict[str, Any]:
             voice_reference = handle_voice_cloning_source(job_input)
             if voice_reference:
                 try:
-                    target_audio_data = base64.b64decode(voice_reference)
-                    target_audio_buffer = io.BytesIO(target_audio_data)
-                    target_audio_array, target_sr = sf.read(target_audio_buffer)
+                    # handle_voice_cloning_source returns a file path, not base64 data
+                    target_audio_array, target_sr = sf.read(voice_reference)
+                    logger.info(f"Loaded target audio from library: {target_sr}Hz, {len(target_audio_array)} samples")
                 except Exception as e:
                     return {
-                        "error": f"Failed to decode library voice: {str(e)}",
-                        "message": "Voice library returned invalid audio data"
+                        "error": f"Failed to load library voice: {str(e)}",
+                        "message": "Voice library returned invalid audio file"
                     }
             else:
                 return {

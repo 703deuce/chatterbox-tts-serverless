@@ -792,6 +792,203 @@ def generate_voice_conversion(job_input: Dict[str, Any]) -> Dict[str, Any]:
             "message": "An unexpected error occurred during voice conversion"
         }
 
+def generate_voice_transfer(job_input: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Voice Transfer: Convert input audio to match target voice
+    
+    Supports two modes:
+    1. WAV to Voice Embedding: Transfer input audio to use one of our 37 voice embeddings
+    2. WAV to WAV: Transfer input audio to sound like another WAV file
+    
+    Args:
+        job_input: Dictionary containing:
+            - input_audio: Base64 encoded input audio to transfer (required)
+            - transfer_mode: "embedding" or "audio" (required)
+            
+            For embedding mode:
+            - voice_name: Target voice name from voice library (required)
+            - voice_id: Alternative to voice_name (optional)
+            
+            For audio mode:
+            - target_audio: Base64 encoded target voice audio (required)
+            
+            Optional for both:
+            - no_watermark: Boolean to skip watermarking (default: false)
+    
+    Returns:
+        Dictionary with transferred audio in base64 format
+    """
+    try:
+        # Check if S3Gen model is available
+        if s3gen_model is None:
+            return {
+                "error": "Voice transfer not available. S3Gen model not loaded.",
+                "message": "The S3Gen model checkpoint (checkpoints/s3gen.pt) is required for voice transfer.",
+                "instructions": [
+                    "1. Download the S3Gen model from the chatterbox-streaming repository",
+                    "2. Place it at: checkpoints/s3gen.pt", 
+                    "3. Rebuild the RunPod container"
+                ]
+            }
+        
+        # Get required parameters
+        input_audio_b64 = job_input.get('input_audio')
+        transfer_mode = job_input.get('transfer_mode', 'embedding')  # Default to embedding mode
+        
+        if not input_audio_b64:
+            return {
+                "error": "input_audio is required for voice transfer",
+                "message": "Please provide the input audio as base64 encoded data"
+            }
+        
+        if transfer_mode not in ['embedding', 'audio']:
+            return {
+                "error": "Invalid transfer_mode. Must be 'embedding' or 'audio'",
+                "message": "Use 'embedding' to transfer to voice library voices, or 'audio' to transfer to another WAV file"
+            }
+        
+        # Decode input audio
+        try:
+            input_audio_data = base64.b64decode(input_audio_b64)
+            input_audio_buffer = io.BytesIO(input_audio_data)
+            input_audio_array, input_sr = sf.read(input_audio_buffer)
+            logger.info(f"Input audio loaded: {input_sr}Hz, {len(input_audio_array)} samples")
+        except Exception as e:
+            return {
+                "error": f"Failed to decode input audio: {str(e)}",
+                "message": "Please ensure input_audio is valid base64 encoded audio data"
+            }
+        
+        target_audio_array = None
+        target_info = {}
+        
+        if transfer_mode == 'embedding':
+            # Mode 1: WAV to Voice Embedding
+            voice_name = job_input.get('voice_name')
+            voice_id = job_input.get('voice_id')
+            
+            if not voice_name and not voice_id:
+                return {
+                    "error": "voice_name or voice_id required for embedding mode",
+                    "message": "Specify which voice embedding to transfer to. Use list_local_voices to see available voices."
+                }
+            
+            # Get voice from library using existing function
+            temp_job_input = {'voice_name': voice_name, 'voice_id': voice_id}
+            voice_reference = handle_voice_cloning_source(temp_job_input)
+            
+            if voice_reference:
+                try:
+                    target_audio_array, target_sr = sf.read(voice_reference)
+                    target_info = {
+                        "transfer_mode": "embedding",
+                        "target_voice": voice_name or voice_id,
+                        "source": "voice_library"
+                    }
+                    logger.info(f"Target voice loaded from library: {voice_name or voice_id}")
+                except Exception as e:
+                    return {
+                        "error": f"Failed to load target voice: {str(e)}",
+                        "message": "Voice library returned invalid audio file"
+                    }
+            else:
+                return {
+                    "error": "Target voice not found in library",
+                    "message": f"Voice '{voice_name or voice_id}' not found. Use list_local_voices to see available voices."
+                }
+        
+        elif transfer_mode == 'audio':
+            # Mode 2: WAV to WAV
+            target_audio_b64 = job_input.get('target_audio')
+            
+            if not target_audio_b64:
+                return {
+                    "error": "target_audio required for audio mode",
+                    "message": "Please provide the target audio as base64 encoded data"
+                }
+            
+            try:
+                target_audio_data = base64.b64decode(target_audio_b64)
+                target_audio_buffer = io.BytesIO(target_audio_data)
+                target_audio_array, target_sr = sf.read(target_audio_buffer)
+                target_info = {
+                    "transfer_mode": "audio",
+                    "target_source": "user_provided_audio",
+                    "target_duration": len(target_audio_array) / target_sr
+                }
+                logger.info(f"Target audio loaded: {target_sr}Hz, {len(target_audio_array)} samples")
+            except Exception as e:
+                return {
+                    "error": f"Failed to decode target audio: {str(e)}",
+                    "message": "Please ensure target_audio is valid base64 encoded audio data"
+                }
+        
+        # Process audio for S3Gen model
+        logger.info(f"Processing voice transfer in {transfer_mode} mode...")
+        
+        # Resample input audio to S3_SR (16kHz)
+        input_audio_16 = librosa.resample(input_audio_array, orig_sr=input_sr, target_sr=S3_SR)
+        
+        # Resample target audio to S3GEN_SR (24kHz), limit to 10 seconds for efficiency
+        target_audio_24 = librosa.resample(target_audio_array, orig_sr=target_sr, target_sr=S3GEN_SR)
+        max_samples = S3GEN_SR * 10  # 10 seconds
+        if len(target_audio_24) > max_samples:
+            target_audio_24 = target_audio_24[:max_samples]
+            logger.info("Target audio trimmed to 10 seconds for optimal processing")
+        
+        # Convert to tensors
+        input_audio_16 = torch.tensor(input_audio_16).float().to(device)[None, :]
+        target_audio_24 = torch.tensor(target_audio_24).float().to(device)
+        
+        # Use proper inference mode context
+        with torch.inference_mode():
+            logger.info("Tokenizing input audio...")
+            s3_tokens, _ = s3gen_model.tokenizer(input_audio_16.clone())
+            
+            logger.info("Generating voice transfer...")
+            transferred_wav = s3gen_model(s3_tokens.clone(), target_audio_24.clone(), S3GEN_SR)
+            transferred_wav = transferred_wav.detach().cpu().numpy().flatten()
+        
+        # Apply watermark if requested
+        no_watermark = job_input.get('no_watermark', False)
+        if not no_watermark:
+            try:
+                import perth
+                watermarker = perth.PerthImplicitWatermarker()
+                transferred_wav = watermarker.apply_watermark(transferred_wav, sample_rate=S3GEN_SR)
+                logger.info("Watermark applied to transferred audio")
+            except ImportError:
+                logger.warning("Perth watermarker not available, skipping watermark")
+            except Exception as e:
+                logger.warning(f"Failed to apply watermark: {e}")
+        
+        # Convert to base64
+        transferred_audio_b64 = audio_to_base64(transferred_wav, S3GEN_SR)
+        
+        # Calculate duration
+        duration = len(transferred_wav) / S3GEN_SR
+        
+        logger.info(f"Voice transfer completed successfully. Duration: {duration:.2f}s")
+        
+        return {
+            "audio": transferred_audio_b64,
+            "sample_rate": S3GEN_SR,
+            "duration": duration,
+            "format": "wav",
+            "model": "s3gen",
+            "operation": "voice_transfer",
+            "transfer_info": target_info,
+            "input_duration": len(input_audio_array) / input_sr,
+            "processing_time": "30-90 seconds typical"
+        }
+        
+    except Exception as e:
+        logger.error(f"Voice transfer failed: {e}")
+        return {
+            "error": f"Voice transfer failed: {str(e)}",
+            "message": "An unexpected error occurred during voice transfer"
+        }
+
 
 def generate_tts(job_input: Dict[str, Any]) -> Dict[str, Any]:
     """Route to appropriate TTS generation method based on mode"""
@@ -865,6 +1062,8 @@ def handler(job):
                 }
         elif operation == 'voice_conversion':
             return generate_voice_conversion(job_input)
+        elif operation == 'voice_transfer':
+            return generate_voice_transfer(job_input)
         else:
             raise ValueError(f"Unknown operation: {operation}")
             

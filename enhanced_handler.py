@@ -227,12 +227,24 @@ class EnhancedTTSHandler:
         try:
             logger.debug(f"Processing Chatterbox segment {segment.index}: '{segment.text[:50]}...'")
             
+            # Filter parameters for Chatterbox - only pass what it accepts
+            chatterbox_params = {
+                'text': segment.text,
+                'audio_prompt_array': speaker_embedding
+            }
+            
+            # Only add Chatterbox-specific parameters if they exist
+            if 'chunk_size' in generation_params:
+                chatterbox_params['chunk_size'] = generation_params['chunk_size']
+            if 'exaggeration' in generation_params:
+                chatterbox_params['exaggeration'] = generation_params['exaggeration']
+            if 'cfg_weight' in generation_params:
+                chatterbox_params['cfg_weight'] = generation_params['cfg_weight']
+            if 'temperature' in generation_params:
+                chatterbox_params['temperature'] = generation_params['temperature']
+            
             # Generate audio using Chatterbox
-            audio = self.chatterbox_model.generate(
-                text=segment.text,
-                audio_prompt_array=speaker_embedding,
-                **generation_params
-            )
+            audio = self.chatterbox_model.generate(**chatterbox_params)
             
             # Convert to numpy if needed
             if isinstance(audio, torch.Tensor):
@@ -284,13 +296,20 @@ class EnhancedTTSHandler:
                 logger.warning(f"F5-TTS not available for segment {segment.index}, using Chatterbox")
                 return self.process_segment_chatterbox(segment, speaker_embedding, generation_params)
             
+            # Filter parameters for F5-TTS 
+            f5_params = {}
+            if 'temperature' in generation_params:
+                f5_params['temperature'] = generation_params['temperature']
+            if 'cfg_weight' in generation_params:
+                f5_params['cfg_weight'] = generation_params['cfg_weight']
+            
             # Generate expressive audio using F5-TTS
             audio = self.f5_model.generate_expressive(
                 text=segment.text,
                 tag_type=segment.tag_type,
                 speaker_embedding=speaker_embedding,
                 custom_tag_audio=custom_tag_audio,
-                **generation_params
+                **f5_params
             )
             
             if audio is None:

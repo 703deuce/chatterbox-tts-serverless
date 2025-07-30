@@ -1,8 +1,8 @@
 # Use NVIDIA CUDA base image
 FROM nvidia/cuda:11.8.0-devel-ubuntu22.04
 
-# Cachebuster to force fresh builds - Updated for new voice embeddings
-ARG CACHEBUSTER=2025012700
+# Cachebuster to force fresh builds - OPTIMIZATION DEPLOYMENT: Direct Audio Arrays
+ARG CACHEBUSTER=2025012701
 
 # Set environment variables
 ENV DEBIAN_FRONTEND=noninteractive

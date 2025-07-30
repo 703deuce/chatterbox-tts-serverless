@@ -690,6 +690,19 @@ def handler_optimized(job):
         operation = job_input.get('operation', 'tts')
         
         if operation == 'tts':
+            # Check if text contains expressive tags
+            text = job_input.get('text', '')
+            if '{' in text and '}' in text:
+                # Use enhanced expressive TTS
+                try:
+                    from enhanced_handler import EnhancedTTSHandler
+                    enhanced_handler = EnhancedTTSHandler()
+                    return enhanced_handler.generate_expressive_tts(job_input)
+                except Exception as e:
+                    logger.warning(f"Enhanced expressive TTS failed, falling back to standard: {e}")
+                    # Fall through to standard TTS processing
+            
+            # Standard TTS processing
             mode = job_input.get('mode', 'basic')
             
             if mode == 'basic':
@@ -701,6 +714,16 @@ def handler_optimized(job):
                 return generate_streaming_tts_optimized(job_input)
             else:
                 raise ValueError(f"Unknown mode: {mode}")
+        
+        elif operation == 'expressive_tts':
+            # Explicit expressive TTS operation
+            try:
+                from enhanced_handler import EnhancedTTSHandler
+                enhanced_handler = EnhancedTTSHandler()
+                return enhanced_handler.generate_expressive_tts(job_input)
+            except Exception as e:
+                logger.error(f"Enhanced expressive TTS failed: {e}")
+                return {"error": f"Expressive TTS failed: {str(e)}"}
         
         elif operation == 'list_local_voices':
             # List voices from optimized library

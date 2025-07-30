@@ -1,5 +1,0 @@
-[33m5b11db9[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m)[m Remove voice audio files from repository
-[33m3e1332f[m Add optimized voice embeddings with name-based API support
-[33m03edc41[m Add new voice embeddings with RunPod integration
-[33mf194264[m[33m ([m[1;31morigin/main[m[33m)[m Proper PyTorch inference mode fix - use torch.inference_mode() and clone tensors
-[33m0112688[m Comprehensive PyTorch tensor fix - clone tensors and use training mode for S3Gen

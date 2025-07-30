@@ -90,7 +90,7 @@ def load_optimized_models():
             logger.info("S3Gen model loaded successfully")
         else:
             logger.warning("S3Gen model not available - voice conversion disabled")
-            s3gen_model = None
+                s3gen_model = None
         
     except Exception as e:
         logger.error(f"Failed to load optimized models: {e}")
@@ -309,7 +309,7 @@ def generate_streaming_tts_optimized(job_input: Dict[str, Any]) -> Dict[str, Any
                 'chunk_shape': list(audio_chunk.shape) if hasattr(audio_chunk, 'shape') else None
             }
             chunk_metrics.append(chunk_info)
-        
+            
         # Combine all chunks
         final_audio = torch.cat(audio_chunks, dim=-1)
         total_time = time.time() - start_time
@@ -384,6 +384,296 @@ def generate_streaming_tts_optimized(job_input: Dict[str, Any]) -> Dict[str, Any
         logger.error(f"Optimized streaming TTS generation failed: {e}")
         raise RuntimeError(f"Optimized streaming TTS generation failed: {str(e)}")
 
+def generate_voice_conversion_optimized(job_input: Dict[str, Any]) -> Dict[str, Any]:
+    """OPTIMIZED: Generate voice conversion using direct audio arrays"""
+    try:
+        # Extract input audio
+        input_audio_b64 = job_input.get('input_audio')
+        if not input_audio_b64:
+            raise ValueError("input_audio is required")
+        
+        # Decode input audio (inline utility)
+        def base64_to_audio(audio_b64):
+            import base64
+            import io
+            import soundfile as sf
+            audio_data = base64.b64decode(audio_b64)
+            audio_buffer = io.BytesIO(audio_data)
+            audio_array, sample_rate = sf.read(audio_buffer)
+            return audio_array, sample_rate
+        
+        input_audio_array, input_sr = base64_to_audio(input_audio_b64)
+        logger.info(f"Loaded input audio: {input_sr}Hz, {len(input_audio_array)} samples")
+        
+        # Get target voice parameters
+        voice_name = job_input.get('voice_name')
+        voice_id = job_input.get('voice_id')
+        target_speaker_b64 = job_input.get('target_speaker')
+        
+        # Handle target audio source
+        if target_speaker_b64:
+            # Direct audio input (no optimization needed)
+            try:
+                target_audio_array, target_sr = base64_to_audio(target_speaker_b64)
+                logger.info(f"Using provided target speaker audio: {target_sr}Hz, {len(target_audio_array)} samples")
+            except Exception as e:
+                return {
+                    "error": f"Failed to decode target speaker audio: {str(e)}",
+                    "message": "Please ensure target_speaker is valid base64 encoded audio data"
+                }
+        
+        elif voice_name or voice_id:
+            # OPTIMIZATION: Use voice from library with direct audio arrays
+            audio_prompt_array = handle_voice_cloning_source_optimized(job_input)
+            if audio_prompt_array is not None:
+                target_audio_array = audio_prompt_array
+                target_sr = 24000  # Default sample rate for embeddings
+                logger.info(f"OPTIMIZED: Loaded target audio from library directly: {len(target_audio_array)} samples")
+            else:
+                return {
+                    "error": "Voice not found in library",
+                    "message": f"Voice '{voice_name or voice_id}' not found. Use list_local_voices operation to see available voices."
+                }
+        
+        else:
+            return {
+                "error": "target_speaker, voice_name, or voice_id is required",
+                "message": "Please provide either target_speaker (base64 audio), voice_name, or voice_id"
+            }
+        
+        # Process audio for S3Gen model
+        logger.info("Processing audio for voice conversion...")
+        
+        # Load and resample input audio to S3_SR (16kHz)
+        input_audio_16 = librosa.resample(input_audio_array, orig_sr=input_sr, target_sr=S3_SR)
+        
+        # Load and resample target audio to S3GEN_SR (24kHz), limit to 10 seconds
+        target_audio_24 = librosa.resample(target_audio_array, orig_sr=target_sr, target_sr=S3GEN_SR)
+        max_samples = S3GEN_SR * 10  # 10 seconds
+        if len(target_audio_24) > max_samples:
+            target_audio_24 = target_audio_24[:max_samples]
+        
+        # Process audio for S3Gen model
+        input_audio_16 = torch.tensor(input_audio_16).float().to(device)[None, :]
+        target_audio_24 = torch.tensor(target_audio_24).float().to(device)
+        
+        # Use proper inference mode context
+        with torch.inference_mode():
+            logger.info("Tokenizing input audio...")
+            s3_tokens, _ = s3gen_model.tokenizer(input_audio_16.clone())
+            
+            # Generate voice conversion
+            logger.info("Generating voice conversion...")
+            converted_wav = s3gen_model(s3_tokens.clone(), target_audio_24.clone(), S3GEN_SR)
+            converted_wav = converted_wav.detach().cpu().numpy().flatten()
+        
+        # Apply watermark if requested
+        no_watermark = job_input.get('no_watermark', False)
+        if not no_watermark:
+            try:
+                import perth
+                watermarker = perth.PerthImplicitWatermarker()
+                converted_wav = watermarker.apply_watermark(converted_wav, sample_rate=S3GEN_SR)
+                logger.info("Watermark applied to converted audio")
+            except ImportError:
+                logger.warning("Perth watermarker not available, skipping watermark")
+            except Exception as e:
+                logger.warning(f"Failed to apply watermark: {e}")
+        
+        # Convert to base64 (inline utility)
+        def audio_to_base64(audio_array, sample_rate):
+            buffer = io.BytesIO()
+            sf.write(buffer, audio_array, sample_rate, format='WAV')
+            buffer.seek(0)
+            audio_b64 = base64.b64encode(buffer.read()).decode('utf-8')
+            return audio_b64
+        
+        converted_audio_b64 = audio_to_base64(converted_wav, S3GEN_SR)
+        
+        # Calculate duration
+        duration = len(converted_wav) / S3GEN_SR
+        
+        logger.info(f"Voice conversion completed successfully. Duration: {duration:.2f}s")
+        
+        # Prepare response with optimization indicators
+        response = {
+            "audio": converted_audio_b64,
+            "sample_rate": S3GEN_SR,
+            "duration": duration,
+            "format": "wav",
+            "model": "s3gen",
+            "operation": "voice_conversion"
+        }
+        
+        # Add optimization indicator if voice library was used
+        if voice_name or voice_id:
+            response.update({
+                "optimization": "direct_audio_array",
+                "target_voice_info": {
+                    "voice_name": voice_name or "unknown",
+                    "loaded_via": "optimized_embeddings"
+                }
+            })
+        
+        return response
+        
+    except Exception as e:
+        logger.error(f"Voice conversion failed: {e}")
+        return {
+            "error": f"Voice conversion failed: {str(e)}",
+            "message": "An unexpected error occurred during voice conversion"
+        }
+
+def generate_voice_transfer_optimized(job_input: Dict[str, Any]) -> Dict[str, Any]:
+    """OPTIMIZED: Generate voice transfer using direct audio arrays"""
+    try:
+        # Extract and validate required parameters
+        input_audio_b64 = job_input.get('input_audio')
+        transfer_mode = job_input.get('transfer_mode')
+        
+        if not input_audio_b64:
+            raise ValueError("input_audio is required")
+        if transfer_mode not in ['embedding', 'audio']:
+            raise ValueError("transfer_mode must be 'embedding' or 'audio'")
+        
+        # Decode input audio (inline utility)
+        def base64_to_audio(audio_b64):
+            import base64
+            import io
+            import soundfile as sf
+            audio_data = base64.b64decode(audio_b64)
+            audio_buffer = io.BytesIO(audio_data)
+            audio_array, sample_rate = sf.read(audio_buffer)
+            return audio_array, sample_rate
+        
+        input_audio_array, input_sr = base64_to_audio(input_audio_b64)
+        logger.info(f"Voice transfer: {transfer_mode} mode - Input audio: {input_sr}Hz, {len(input_audio_array)} samples")
+        
+        if transfer_mode == 'embedding':
+            # OPTIMIZATION: WAV to Voice Embedding mode using direct arrays
+            voice_name = job_input.get('voice_name')
+            voice_id = job_input.get('voice_id')
+            
+            if not voice_name and not voice_id:
+                raise ValueError("voice_name or voice_id is required for embedding mode")
+            
+            # Use optimized voice loading
+            audio_prompt_array = handle_voice_cloning_source_optimized(job_input)
+            if audio_prompt_array is not None:
+                target_audio_array = audio_prompt_array
+                target_sr = 24000  # Default sample rate for embeddings
+                logger.info(f"OPTIMIZED: Loaded target voice directly from embeddings: {len(target_audio_array)} samples")
+                
+                transfer_info = {
+                    "transfer_mode": "embedding",
+                    "target_voice": voice_name or voice_id,
+                    "source": "voice_library",
+                    "voice_loading": "optimized_direct_access"
+                }
+                optimization_indicator = "direct_audio_array"
+            else:
+                return {
+                    "error": "Voice not found in library",
+                    "message": f"Voice '{voice_name or voice_id}' not found. Use list_local_voices operation to see available voices."
+                }
+                
+        elif transfer_mode == 'audio':
+            # WAV to WAV mode (no optimization needed - direct audio)
+            target_audio_b64 = job_input.get('target_audio')
+            if not target_audio_b64:
+                raise ValueError("target_audio is required for audio mode")
+            
+            target_audio_array, target_sr = base64_to_audio(target_audio_b64)
+            logger.info(f"Using provided target audio: {target_sr}Hz, {len(target_audio_array)} samples")
+            
+            transfer_info = {
+                "transfer_mode": "audio",
+                "target_source": "user_provided_audio",
+                "target_duration": len(target_audio_array) / target_sr
+            }
+            optimization_indicator = None  # No optimization for direct audio mode
+        
+        # Process audio for S3Gen model (same logic for both modes)
+        logger.info("Processing audio for voice transfer...")
+        
+        # Resample input audio to S3_SR (16kHz)
+        input_audio_16 = librosa.resample(input_audio_array, orig_sr=input_sr, target_sr=S3_SR)
+        
+        # Resample target audio to S3GEN_SR (24kHz), limit to 10 seconds
+        target_audio_24 = librosa.resample(target_audio_array, orig_sr=target_sr, target_sr=S3GEN_SR)
+        max_samples = S3GEN_SR * 10  # 10 seconds
+        if len(target_audio_24) > max_samples:
+            target_audio_24 = target_audio_24[:max_samples]
+            logger.info("Target audio trimmed to 10 seconds for processing efficiency")
+        
+        # Convert to tensors
+        input_audio_16 = torch.tensor(input_audio_16).float().to(device)[None, :]
+        target_audio_24 = torch.tensor(target_audio_24).float().to(device)
+        
+        # Generate voice transfer using S3Gen
+        with torch.inference_mode():
+            logger.info("Tokenizing input audio...")
+            s3_tokens, _ = s3gen_model.tokenizer(input_audio_16.clone())
+            
+            logger.info("Generating voice transfer...")
+            transferred_wav = s3gen_model(s3_tokens.clone(), target_audio_24.clone(), S3GEN_SR)
+            transferred_wav = transferred_wav.detach().cpu().numpy().flatten()
+        
+        # Apply watermark if requested
+        no_watermark = job_input.get('no_watermark', False)
+        if not no_watermark:
+            try:
+                import perth
+                watermarker = perth.PerthImplicitWatermarker()
+                transferred_wav = watermarker.apply_watermark(transferred_wav, sample_rate=S3GEN_SR)
+                logger.info("Watermark applied to transferred audio")
+            except ImportError:
+                logger.warning("Perth watermarker not available, skipping watermark")
+            except Exception as e:
+                logger.warning(f"Failed to apply watermark: {e}")
+        
+        # Convert to base64 (inline utility)
+        def audio_to_base64(audio_array, sample_rate):
+            buffer = io.BytesIO()
+            sf.write(buffer, audio_array, sample_rate, format='WAV')
+            buffer.seek(0)
+            audio_b64 = base64.b64encode(buffer.read()).decode('utf-8')
+            return audio_b64
+        
+        transferred_audio_b64 = audio_to_base64(transferred_wav, S3GEN_SR)
+        
+        # Calculate durations
+        input_duration = len(input_audio_array) / input_sr
+        output_duration = len(transferred_wav) / S3GEN_SR
+        
+        logger.info(f"Voice transfer completed successfully. Duration: {output_duration:.2f}s")
+        
+        # Prepare response
+        response = {
+            "audio": transferred_audio_b64,
+            "sample_rate": S3GEN_SR,
+            "duration": output_duration,
+            "format": "wav",
+            "model": "s3gen",
+            "operation": "voice_transfer",
+            "transfer_info": transfer_info,
+            "input_duration": input_duration,
+            "processing_time": "30-90 seconds typical"
+        }
+        
+        # Add optimization indicator for embedding mode
+        if optimization_indicator:
+            response["optimization"] = optimization_indicator
+        
+        return response
+        
+    except Exception as e:
+        logger.error(f"Voice transfer failed: {e}")
+        return {
+            "error": f"Voice transfer failed: {str(e)}",
+            "message": "An unexpected error occurred during voice transfer"
+        }
+
 def handler_optimized(job):
     """OPTIMIZED: Main handler function using direct audio arrays"""
     try:
@@ -427,10 +717,17 @@ def handler_optimized(job):
                     "message": "Optimized voice library failed to initialize"
                 }
         
-        # For other operations (voice_conversion, voice_transfer, voice_cloning)
-        # fall back to backup handler for now
-        else:
-            logger.info(f"Falling back to backup handler for operation: {operation}")
+        elif operation == 'voice_conversion':
+            # OPTIMIZED: Voice conversion with direct audio arrays
+            return generate_voice_conversion_optimized(job_input)
+        
+        elif operation == 'voice_transfer':
+            # OPTIMIZED: Voice transfer with direct audio arrays  
+            return generate_voice_transfer_optimized(job_input)
+        
+        # For voice_cloning operation, fall back to backup handler (no optimization needed - uses direct user audio)
+        elif operation == 'voice_cloning':
+            logger.info(f"Falling back to backup handler for voice_cloning (no optimization needed)")
             try:
                 import sys
                 import importlib.util
@@ -440,7 +737,10 @@ def handler_optimized(job):
                 return backup_handler.handler(job)
             except Exception as e:
                 logger.error(f"Fallback handler error: {e}")
-                return {"error": f"Operation '{operation}' not supported in optimized handler yet"}
+                return {"error": f"Voice cloning operation failed: {str(e)}"}
+        
+        else:
+            return {"error": f"Unknown operation: {operation}"}
             
     except Exception as e:
         logger.error(f"Optimized handler error: {e}")

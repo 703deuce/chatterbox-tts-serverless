@@ -90,7 +90,7 @@ def load_optimized_models():
             logger.info("S3Gen model loaded successfully")
         else:
             logger.warning("S3Gen model not available - voice conversion disabled")
-                s3gen_model = None
+            s3gen_model = None
         
     except Exception as e:
         logger.error(f"Failed to load optimized models: {e}")

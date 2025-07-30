@@ -92,6 +92,8 @@ def load_optimized_models():
             logger.warning("S3Gen model not available - voice conversion disabled")
             s3gen_model = None
         
+        logger.info(f"Optimized voice library initialized with {len(optimized_voice_library.voice_catalog) if optimized_voice_library else 0} voices")
+        
     except Exception as e:
         logger.error(f"Failed to load optimized models: {e}")
         raise e

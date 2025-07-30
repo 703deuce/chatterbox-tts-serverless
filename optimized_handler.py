@@ -139,8 +139,16 @@ def handle_voice_cloning_source_optimized(job_input: Dict[str, Any]) -> Optional
         # Option 3: Use provided reference audio
         elif reference_audio_b64:
             logger.info("Using provided reference audio")
-            # Decode reference audio
-            from handler import base64_to_audio  # Import from original handler
+            # Decode reference audio (inline utility)
+            def base64_to_audio(audio_b64):
+                import base64
+                import io
+                import soundfile as sf
+                audio_data = base64.b64decode(audio_b64)
+                audio_buffer = io.BytesIO(audio_data)
+                audio_array, sample_rate = sf.read(audio_buffer)
+                return audio_array, sample_rate
+                
             reference_audio, ref_sr = base64_to_audio(reference_audio_b64)
             
             # Trim to max duration
@@ -187,8 +195,36 @@ def generate_basic_tts_optimized(job_input: Dict[str, Any]) -> Dict[str, Any]:
         )
         logger.info(f"Optimized basic TTS generation complete - shape: {wav.shape}")
         
-        # Process audio
-        from handler import process_audio_tensor, audio_to_base64  # Import utilities
+        # Process audio (inline utility functions)
+        def process_audio_tensor(wav_tensor, target_sr, normalize=None):
+            if isinstance(wav_tensor, torch.Tensor):
+                wav_numpy = wav_tensor.squeeze().cpu().numpy()
+            else:
+                wav_numpy = wav_tensor
+            
+            # Resample if needed
+            if target_sr != 24000:
+                import librosa
+                wav_numpy = librosa.resample(wav_numpy, orig_sr=24000, target_sr=target_sr)
+            
+            # Normalize if requested
+            if normalize == "peak":
+                max_val = np.max(np.abs(wav_numpy))
+                if max_val > 0:
+                    wav_numpy = wav_numpy / max_val
+            elif normalize == "rms":
+                rms = np.sqrt(np.mean(wav_numpy**2))
+                if rms > 0:
+                    wav_numpy = wav_numpy / rms * 0.1
+            
+            return wav_numpy
+        
+        def audio_to_base64(audio_array, sample_rate):
+            buffer = io.BytesIO()
+            sf.write(buffer, audio_array, sample_rate, format='WAV')
+            buffer.seek(0)
+            audio_b64 = base64.b64encode(buffer.read()).decode('utf-8')
+            return audio_b64
         output_sr = sample_rate if sample_rate else getattr(optimized_tts_model, 'sr', 24000)
         wav_numpy = process_audio_tensor(wav, output_sr, audio_normalization)
         
@@ -280,8 +316,37 @@ def generate_streaming_tts_optimized(job_input: Dict[str, Any]) -> Dict[str, Any
         
         logger.info(f"Optimized streaming TTS complete - Total chunks: {len(audio_chunks)}, Total time: {total_time:.3f}s")
         
-        # Process audio
-        from handler import process_audio_tensor, audio_to_base64
+        # Process audio (inline utility functions)
+        def process_audio_tensor(wav_tensor, target_sr, normalize=None):
+            if isinstance(wav_tensor, torch.Tensor):
+                wav_numpy = wav_tensor.squeeze().cpu().numpy()
+            else:
+                wav_numpy = wav_tensor
+            
+            # Resample if needed
+            if target_sr != 24000:
+                import librosa
+                wav_numpy = librosa.resample(wav_numpy, orig_sr=24000, target_sr=target_sr)
+            
+            # Normalize if requested
+            if normalize == "peak":
+                max_val = np.max(np.abs(wav_numpy))
+                if max_val > 0:
+                    wav_numpy = wav_numpy / max_val
+            elif normalize == "rms":
+                rms = np.sqrt(np.mean(wav_numpy**2))
+                if rms > 0:
+                    wav_numpy = wav_numpy / rms * 0.1
+            
+            return wav_numpy
+        
+        def audio_to_base64(audio_array, sample_rate):
+            buffer = io.BytesIO()
+            sf.write(buffer, audio_array, sample_rate, format='WAV')
+            buffer.seek(0)
+            audio_b64 = base64.b64encode(buffer.read()).decode('utf-8')
+            return audio_b64
+        
         output_sr = sample_rate if sample_rate else getattr(optimized_tts_model, 'sr', 24000)
         wav_numpy = process_audio_tensor(final_audio, output_sr, audio_normalization)
         
@@ -363,11 +428,19 @@ def handler_optimized(job):
                 }
         
         # For other operations (voice_conversion, voice_transfer, voice_cloning)
-        # fall back to original handler for now
+        # fall back to backup handler for now
         else:
-            logger.info(f"Falling back to original handler for operation: {operation}")
-            from handler import handler as original_handler
-            return original_handler(job)
+            logger.info(f"Falling back to backup handler for operation: {operation}")
+            try:
+                import sys
+                import importlib.util
+                spec = importlib.util.spec_from_file_location("handler_backup", "/workspace/handler_backup.py")
+                backup_handler = importlib.util.module_from_spec(spec)
+                spec.loader.exec_module(backup_handler)
+                return backup_handler.handler(job)
+            except Exception as e:
+                logger.error(f"Fallback handler error: {e}")
+                return {"error": f"Operation '{operation}' not supported in optimized handler yet"}
             
     except Exception as e:
         logger.error(f"Optimized handler error: {e}")

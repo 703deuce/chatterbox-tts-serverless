@@ -47,6 +47,7 @@ RUN wget -O checkpoints/s3gen.pt https://huggingface.co/ResembleAI/chatterbox/re
 RUN echo "S3Gen model download completed. File size:" && ls -lh checkpoints/s3gen.pt
 
 # F5-TTS models setup (following official F5-TTS Docker pattern)
+# Updated: 2025-07-31 - Fixed Docker parse error, using VOLUME approach
 RUN echo "Setting up F5-TTS model cache directory..."
 RUN mkdir -p /root/.cache/huggingface/hub
 # Models are downloaded into this folder, F5-TTS will download them at runtime if needed

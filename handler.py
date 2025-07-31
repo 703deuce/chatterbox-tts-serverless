@@ -34,6 +34,7 @@ optimized_tts_model: Optional[OptimizedChatterboxTTS] = None
 optimized_voice_library: Optional[OptimizedVoiceLibrary] = None
 legacy_voice_library: Optional[LocalVoiceLibrary] = None  # Fallback
 s3gen_model: Optional[S3Gen] = None
+f5_tts_model = None  # F5-TTS for expressive tags
 
 # Automatically detect the best available device
 if torch.cuda.is_available():
@@ -45,7 +46,7 @@ else:
 
 def load_optimized_models():
     """Load optimized TTS model and voice library"""
-    global optimized_tts_model, optimized_voice_library, legacy_voice_library, s3gen_model
+    global optimized_tts_model, optimized_voice_library, legacy_voice_library, s3gen_model, f5_tts_model
     
     logger.info(f"Loading optimized models on device: {device}")
     
@@ -54,6 +55,20 @@ def load_optimized_models():
         logger.info("Loading OptimizedChatterboxTTS...")
         optimized_tts_model = create_optimized_tts(device=device)
         logger.info("OptimizedChatterboxTTS loaded successfully")
+        
+        # Load F5-TTS for expressive tags
+        logger.info("Loading F5-TTS...")
+        try:
+            from f5_tts_integration import F5TTSWrapper
+            f5_tts_model = F5TTSWrapper(device=device)
+            if f5_tts_model.load_model():
+                logger.info("F5-TTS loaded successfully")
+            else:
+                logger.warning("F5-TTS failed to load - expressive tags will use Chatterbox fallback")
+                f5_tts_model = None
+        except Exception as e:
+            logger.warning(f"F5-TTS not available: {e}")
+            f5_tts_model = None
         
         # Load optimized voice library
         logger.info("Loading OptimizedVoiceLibrary...")
@@ -676,6 +691,73 @@ def generate_voice_transfer_optimized(job_input: Dict[str, Any]) -> Dict[str, An
             "message": "An unexpected error occurred during voice transfer"
         }
 
+def generate_f5_tts_optimized(job_input: Dict[str, Any]) -> Dict[str, Any]:
+    """OPTIMIZED: Generate F5-TTS using the loaded F5TTSWrapper"""
+    try:
+        # Extract and validate text
+        text = job_input.get('text', 'Hello, this is a test.')
+        if not text or len(text.strip()) == 0:
+            raise ValueError("Text cannot be empty")
+        if len(text) > 5000:
+            raise ValueError("Text too long (max 5000 characters)")
+        
+        logger.info(f"F5-TTS request - Text: {len(text)} chars")
+        
+        # Get reference audio if provided
+        reference_audio = job_input.get('reference_audio')
+        voice_id = job_input.get('voice_id')
+        
+        # Get speaker embedding
+        speaker_embedding = None
+        if voice_id:
+            try:
+                speaker_embedding = get_speaker_embedding(voice_id)
+                logger.info(f"Using voice embedding for: {voice_id}")
+            except Exception as e:
+                logger.warning(f"Failed to get speaker embedding for {voice_id}: {e}")
+        
+        # Generate audio using F5-TTS
+        logger.info("Starting F5-TTS generation...")
+        start_time = time.time()
+        
+        # Use F5TTSWrapper to generate audio
+        audio_array = f5_tts_model.generate_expressive(
+            text=text,
+            tag_type="normal",  # Default tag
+            speaker_embedding=speaker_embedding,
+            reference_audio=reference_audio
+        )
+        
+        if audio_array is None:
+            raise RuntimeError("F5-TTS returned no audio")
+        
+        total_time = time.time() - start_time
+        logger.info(f"F5-TTS generation complete - Duration: {total_time:.2f}s")
+        
+        # Convert to base64
+        sample_rate = 24000  # F5-TTS default
+        buffer = io.BytesIO()
+        sf.write(buffer, audio_array, sample_rate, format='WAV')
+        buffer.seek(0)
+        audio_base64 = base64.b64encode(buffer.read()).decode('utf-8')
+        
+        # Prepare response
+        response = {
+            "audio": audio_base64,
+            "sample_rate": sample_rate,
+            "text": text,
+            "mode": "f5_tts",
+            "generation_time": total_time,
+            "audio_duration": len(audio_array) / sample_rate
+        }
+        
+        logger.info(f"F5-TTS successful - Audio: {len(audio_array):,} samples")
+        return response
+        
+    except Exception as e:
+        logger.error(f"F5-TTS generation failed: {e}")
+        raise RuntimeError(f"F5-TTS generation failed: {str(e)}")
+
 def handler_optimized(job):
     """OPTIMIZED: Main handler function using direct audio arrays"""
     try:
@@ -690,6 +772,18 @@ def handler_optimized(job):
         operation = job_input.get('operation', 'tts')
         
         if operation == 'tts':
+            # Check for explicit model selection
+            model = job_input.get('model', 'chatterbox')
+            
+            # Check if F5-TTS is explicitly requested
+            if model == 'f5_tts' and f5_tts_model is not None:
+                # Use F5-TTS for this request
+                try:
+                    return generate_f5_tts_optimized(job_input)
+                except Exception as e:
+                    logger.warning(f"F5-TTS failed, falling back to Chatterbox: {e}")
+                    # Fall through to standard TTS processing
+            
             # Check if text contains expressive tags
             text = job_input.get('text', '')
             if '{' in text and '}' in text:

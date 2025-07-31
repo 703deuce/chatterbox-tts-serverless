@@ -129,13 +129,10 @@ class F5TTSWrapper:
             
             logger.info("Loading F5-TTS from pre-downloaded local models...")
             
-            # Load F5-TTS with local files (like ChatterboxTTS with S3Gen)
+            # Load F5-TTS using directory path (official approach for local models)
+            # As per official docs: F5-TTS can load by specifying the model directory
             self.model = F5TTS(
-                model_type=self.model_type,
-                ckpt_file=local_model_file,   # Local checkpoint from build
-                vocab_file=local_vocab_file,  # Local vocab from build
-                ode_method="euler",
-                use_ema=True,
+                model_type=local_model_dir,  # Point to directory containing model files
                 device=self.device
             )
             

@@ -8,6 +8,7 @@ import torch
 import numpy as np
 import logging
 import time
+import os
 from typing import Optional, Dict, Any, Union
 from pathlib import Path
 
@@ -220,32 +221,58 @@ class F5TTSWrapper:
                 return None
             
             # Use basic F5-TTS inference parameters
-            # Start with minimal parameters and build up
+            # Based on official F5-TTS API documentation
             try:
                 logger.info(f"F5-TTS inference with tag: {actual_tag}")
-                logger.info(f"F5-TTS ref_audio path: {ref_audio_for_f5}")
+                logger.info(f"F5-TTS ref_file path: {ref_audio_for_f5}")
                 logger.info(f"F5-TTS gen_text: '{text[:100]}...'")
                 
-                audio_output, sample_rate = self.model.infer(
-                    gen_text=text,
-                    ref_audio=ref_audio_for_f5,
-                    ref_text="",
-                    remove_silence=True
+                # Create temporary output file for F5-TTS
+                import tempfile
+                output_wav_path = tempfile.mktemp(suffix=".wav")
+                
+                # Use complete F5-TTS API as per official documentation
+                wav, sample_rate, _ = self.model.infer(
+                    ref_file=ref_audio_for_f5,      # Reference audio file path
+                    ref_text="",                    # Reference text (empty for auto-transcription)
+                    gen_text=text,                  # Text to generate
+                    file_wave=output_wav_path,      # Output file path
+                    remove_silence=True             # Remove silence from output
                 )
+                
+                # F5-TTS returns both wav array and sample rate
+                audio_output = wav
                 
                 logger.info(f"F5-TTS infer returned - audio shape: {audio_output.shape if hasattr(audio_output, 'shape') else type(audio_output)}")
                 logger.info(f"F5-TTS sample rate: {sample_rate}")
+                
+                # Clean up temp file
+                try:
+                    os.unlink(output_wav_path)
+                except:
+                    pass
                 
             except Exception as infer_error:
                 logger.error(f"F5-TTS infer failed: {infer_error}")
                 logger.info("Trying fallback F5-TTS inference without advanced params...")
                 # Try most basic inference
                 try:
-                    audio_output, sample_rate = self.model.infer(
+                    # Minimal F5-TTS parameters
+                    output_wav_path = tempfile.mktemp(suffix=".wav")
+                    wav, sample_rate, _ = self.model.infer(
+                        ref_file=ref_audio_for_f5,  # Only required parameters
                         gen_text=text,
-                        ref_audio=ref_audio_for_f5
+                        file_wave=output_wav_path
                     )
+                    audio_output = wav
                     logger.info(f"F5-TTS fallback infer returned - audio shape: {audio_output.shape if hasattr(audio_output, 'shape') else type(audio_output)}")
+                    
+                    # Clean up temp file
+                    try:
+                        os.unlink(output_wav_path)
+                    except:
+                        pass
+                        
                 except Exception as fallback_error:
                     logger.error(f"F5-TTS fallback infer also failed: {fallback_error}")
                     return None

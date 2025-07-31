@@ -63,42 +63,30 @@ class OptimizedF5TTS:
         logger.info(f"OptimizedF5TTS initialized on {device}")
     
     def load_model(self):
-        """Load F5-TTS model from local files (like Chatterbox S3Gen)"""
+        """Load F5-TTS model using runtime downloads (like official F5-TTS pattern)"""
         if not F5_AVAILABLE:
             logger.error("F5-TTS package not available")
             return False
         
         try:
-            # Check for local model files (like checkpoints/s3gen.pt)
-            if not Path(self.model_file).exists():
-                logger.error(f"F5-TTS model file not found: {self.model_file}")
-                logger.error("F5-TTS models must be pre-downloaded during Docker build")
-                return False
-                
-            if not Path(self.vocab_file).exists():
-                logger.error(f"F5-TTS vocab file not found: {self.vocab_file}")
-                return False
-            
-            logger.info("Loading F5-TTS from pre-downloaded local models...")
+            logger.info(f"Loading F5-TTS model ({self.model_type}) on {self.device}")
             start_time = time.time()
             
-            # Load F5-TTS with local files (like ChatterboxTTS.from_pretrained)
+            # Use F5-TTS default model loading (downloads to HuggingFace cache if needed)
+            # This follows the official F5-TTS Docker pattern with VOLUME /root/.cache/huggingface/hub/
             self.model = F5TTS(
-                model_type="F5TTS_v1_Base",
-                ckpt_file=self.model_file,   # Local checkpoint
-                vocab_file=self.vocab_file,  # Local vocab
-                ode_method="euler",
-                use_ema=True,
+                model_type=self.model_type,  # "F5TTS_v1_Base"
                 device=self.device
             )
             
-            load_time = time.time() - start_time
             self.is_loaded = True
-            logger.info(f"F5-TTS loaded successfully in {load_time:.2f}s")
+            load_time = time.time() - start_time
+            logger.info(f"✅ F5-TTS model loaded successfully in {load_time:.2f}s")
             return True
             
         except Exception as e:
-            logger.error(f"Failed to load F5-TTS model: {e}")
+            logger.error(f"❌ Failed to load F5-TTS model: {e}")
+            self.is_loaded = False
             return False
     
     def generate_expressive(
@@ -150,6 +138,39 @@ class OptimizedF5TTS:
     def get_supported_tags(self) -> Dict[str, str]:
         """Get supported expressive tags"""
         return self.supported_tags
+
+    @classmethod
+    def from_pretrained(cls, device: str = "cuda", model_type: str = "F5TTS_v1_Base"):
+        """
+        Create OptimizedF5TTS instance with model loading (following Chatterbox pattern)
+        F5-TTS will download models to /root/.cache/huggingface/hub/ at runtime
+        """
+        instance = cls(device=device, model_type=model_type)
+        
+        if not F5_AVAILABLE:
+            logger.warning("F5-TTS package not available")
+            return instance
+            
+        try:
+            logger.info(f"Loading F5-TTS model ({model_type}) on {device}")
+            start_time = time.time()
+            
+            # Use F5-TTS default model loading (downloads to HuggingFace cache if needed)
+            # This follows the official F5-TTS pattern with VOLUME /root/.cache/huggingface/hub/
+            instance.model = F5TTS(
+                model_type=model_type,  # "F5TTS_v1_Base"
+                device=device
+            )
+            
+            instance.is_loaded = True
+            load_time = time.time() - start_time
+            logger.info(f"✅ F5-TTS model loaded successfully in {load_time:.2f}s")
+            
+        except Exception as e:
+            logger.error(f"❌ Failed to load F5-TTS model: {e}")
+            instance.is_loaded = False
+            
+        return instance
 
 
 class F5TTSFallback:

@@ -46,28 +46,11 @@ RUN echo "Downloading S3Gen model checkpoint (approx 1.06 GB)..."
 RUN wget -O checkpoints/s3gen.pt https://huggingface.co/ResembleAI/chatterbox/resolve/main/s3gen.pt
 RUN echo "S3Gen model download completed. File size:" && ls -lh checkpoints/s3gen.pt
 
-# Download F5-TTS models during build (like S3Gen)
-RUN echo "Downloading F5-TTS models..."
+# F5-TTS models setup (following official F5-TTS Docker pattern)
+RUN echo "Setting up F5-TTS model cache directory..."
 RUN mkdir -p /root/.cache/huggingface/hub
-RUN pip install huggingface_hub
-RUN python3 -c "
-from huggingface_hub import snapshot_download; \
-import os; \
-print('Downloading F5-TTS base model...'); \
-try: \
-    snapshot_download( \
-        repo_id='SWivid/F5-TTS', \
-        local_dir='/workspace/f5_models', \
-        allow_patterns=['F5TTS_v1_Base/*'] \
-    ); \
-    print('✅ F5-TTS model downloaded successfully'); \
-    import os; \
-    for root, dirs, files in os.walk('/workspace/f5_models'): \
-        for file in files: \
-            print(f'  {os.path.join(root, file)}') \
-except Exception as e: \
-    print(f'❌ F5-TTS download failed: {e}') \
-"
+# Models are downloaded into this folder, F5-TTS will download them at runtime if needed
+VOLUME /root/.cache/huggingface/hub/
 
 # Copy application code
 COPY . .

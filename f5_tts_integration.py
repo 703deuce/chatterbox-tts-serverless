@@ -183,7 +183,29 @@ class F5TTSWrapper:
                 logger.debug(f"Mapping extended tag '{tag_type}' to native tag '{actual_tag}'")
             
             # Get reference audio for voice cloning
-            ref_audio_array = reference_audio if reference_audio is not None else speaker_embedding
+            # Decode base64 reference audio if provided
+            if reference_audio is not None and isinstance(reference_audio, str):
+                # reference_audio is base64 encoded - decode it first
+                try:
+                    logger.info("Decoding base64 reference audio for F5-TTS")
+                    import base64
+                    import io
+                    import soundfile as sf
+                    
+                    # Decode base64 to bytes
+                    audio_bytes = base64.b64decode(reference_audio)
+                    
+                    # Load audio from bytes
+                    audio_buffer = io.BytesIO(audio_bytes)
+                    ref_audio_array, sample_rate = sf.read(audio_buffer)
+                    
+                    logger.info(f"Decoded reference audio: {ref_audio_array.shape}, SR: {sample_rate}")
+                    
+                except Exception as decode_error:
+                    logger.error(f"Failed to decode base64 reference audio: {decode_error}")
+                    ref_audio_array = speaker_embedding
+            else:
+                ref_audio_array = reference_audio if reference_audio is not None else speaker_embedding
             
             # For custom tags, use custom reference audio if provided
             if tag_type not in self.native_tags and custom_tag_audio and tag_type in custom_tag_audio:

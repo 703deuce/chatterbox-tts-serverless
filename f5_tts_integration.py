@@ -103,7 +103,7 @@ class F5TTSWrapper:
         }
     
     def load_model(self):
-        """Load F5-TTS model from local files (like Chatterbox does with S3Gen)"""
+        """Load F5-TTS model using runtime downloads (official F5-TTS pattern)"""
         if not F5_AVAILABLE:
             logger.error("F5-TTS not available - cannot load model")
             return False
@@ -112,59 +112,21 @@ class F5TTSWrapper:
             logger.info(f"Loading F5-TTS model ({self.model_type}) on {self.device}")
             start_time = time.time()
             
-            # Check for pre-downloaded models (like checkpoints/s3gen.pt for Chatterbox)
-            local_model_dir = "/workspace/f5_models/F5TTS_v1_Base"
-            local_model_file = f"{local_model_dir}/model_1250000.safetensors"
-            local_vocab_file = f"{local_model_dir}/vocab.txt"
+            # Use F5-TTS default model loading (downloads to HuggingFace cache if needed)
+            # This follows the official F5-TTS Docker pattern with VOLUME /root/.cache/huggingface/hub/
+            self.model = F5TTS(
+                model_type=self.model_type,  # "F5TTS_v1_Base"
+                device=self.device
+            )
             
-            # Try to load from local files first (PACKAGED APPROACH like Chatterbox)
-            if Path(local_model_file).exists() and Path(local_vocab_file).exists():
-                logger.info("Loading F5-TTS from pre-downloaded local models...")
-                try:
-                    self.model = F5TTS(
-                        model_type=self.model_type,
-                        ckpt_file=local_model_file,  # Use local checkpoint
-                        vocab_file=local_vocab_file,  # Use local vocab
-                        ode_method="euler",
-                        use_ema=True,
-                        device=self.device
-                    )
-                    
-                    load_time = time.time() - start_time
-                    self.is_loaded = True
-                    logger.info(f"F5-TTS loaded from local models in {load_time:.2f}s")
-                    return True
-                    
-                except Exception as local_error:
-                    logger.warning(f"Local F5-TTS model loading failed: {local_error}")
-                    # Fall through to download attempt
-            else:
-                logger.warning(f"Local F5-TTS models not found at {local_model_dir}")
-                logger.info("Expected files:")
-                logger.info(f"  - {local_model_file}")
-                logger.info(f"  - {local_vocab_file}")
-            
-            # Fallback: Try auto-download (will likely fail in serverless)
-            logger.info("Attempting F5-TTS auto-download (may fail in serverless environment)...")
-            try:
-                self.model = F5TTS(
-                    model_type=self.model_type,
-                    device=self.device
-                )
-                
-                load_time = time.time() - start_time
-                self.is_loaded = True
-                logger.info(f"F5-TTS loaded via auto-download in {load_time:.2f}s")
-                return True
-                
-            except Exception as download_error:
-                logger.error(f"F5-TTS auto-download failed: {download_error}")
-                logger.error("This is expected in serverless environments without internet access")
-                logger.error("F5-TTS requires pre-downloaded models in the Docker image")
-                return False
+            self.is_loaded = True
+            load_time = time.time() - start_time
+            logger.info(f"✅ F5-TTS model loaded successfully in {load_time:.2f}s")
+            return True
             
         except Exception as e:
-            logger.error(f"Failed to initialize F5-TTS: {e}")
+            logger.error(f"❌ Failed to load F5-TTS model: {e}")
+            self.is_loaded = False
             return False
     
     def generate_expressive(

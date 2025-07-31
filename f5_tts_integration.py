@@ -186,12 +186,19 @@ class F5TTSWrapper:
                 logger.debug(f"Mapping extended tag '{tag_type}' to native tag '{actual_tag}'")
             
             # Get reference audio for voice cloning
-            ref_audio = reference_audio if reference_audio is not None else speaker_embedding
+            ref_audio_array = reference_audio if reference_audio is not None else speaker_embedding
             
             # For custom tags, use custom reference audio if provided
             if tag_type not in self.native_tags and custom_tag_audio and tag_type in custom_tag_audio:
                 logger.info(f"Using custom reference audio for tag: {tag_type}")
-                ref_audio = custom_tag_audio[tag_type]
+                ref_audio_array = custom_tag_audio[tag_type]
+            
+            # Convert numpy array to format F5-TTS expects
+            ref_audio_for_f5 = self._prepare_reference_audio_for_f5(ref_audio_array)
+            
+            if ref_audio_for_f5 is None:
+                logger.error("Failed to prepare reference audio for F5-TTS")
+                return None
             
             # Use basic F5-TTS inference parameters
             # Start with minimal parameters and build up
@@ -199,7 +206,7 @@ class F5TTSWrapper:
                 logger.info(f"F5-TTS inference with tag: {actual_tag}")
                 audio_output, sample_rate = self.model.infer(
                     gen_text=text,
-                    ref_audio=ref_audio,
+                    ref_audio=ref_audio_for_f5,
                     ref_text="",
                     remove_silence=True
                 )
@@ -209,7 +216,7 @@ class F5TTSWrapper:
                 # Try most basic inference
                 audio_output, sample_rate = self.model.infer(
                     gen_text=text,
-                    ref_audio=ref_audio
+                    ref_audio=ref_audio_for_f5
                 )
             
             # Apply additional expressive effects if needed
@@ -262,6 +269,44 @@ class F5TTSWrapper:
         except Exception as e:
             logger.warning(f"Failed to apply expressive effects: {e}")
             return audio
+    
+    def _prepare_reference_audio_for_f5(self, audio_array: np.ndarray) -> Optional[str]:
+        """
+        Convert numpy audio array to format F5-TTS expects
+        F5-TTS likely expects a file path to a WAV file, not a numpy array
+        """
+        if audio_array is None:
+            return None
+            
+        try:
+            import soundfile as sf
+            import os
+            
+            # Create temporary WAV file for F5-TTS
+            temp_dir = "/tmp" if os.path.exists("/tmp") else "."
+            temp_wav_path = f"{temp_dir}/f5_ref_audio_{int(time.time())}.wav"
+            
+            # Ensure audio is in correct format for F5-TTS
+            if len(audio_array.shape) > 1:
+                # Convert stereo to mono if needed
+                audio_array = audio_array.mean(axis=1)
+            
+            # Normalize audio
+            if np.max(np.abs(audio_array)) > 0:
+                audio_array = audio_array / np.max(np.abs(audio_array))
+            
+            # Save as WAV file with standard sample rate
+            sample_rate = 24000  # Standard sample rate for TTS
+            sf.write(temp_wav_path, audio_array, sample_rate)
+            
+            logger.info(f"Created temp WAV for F5-TTS: {temp_wav_path}")
+            logger.info(f"Audio shape: {audio_array.shape}, Sample rate: {sample_rate}")
+            
+            return temp_wav_path
+            
+        except Exception as e:
+            logger.error(f"Failed to prepare reference audio for F5-TTS: {e}")
+            return None
     
     def is_available(self) -> bool:
         """Check if F5-TTS is available and loaded"""

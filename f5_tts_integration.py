@@ -130,12 +130,9 @@ class F5TTSWrapper:
             logger.info("Loading F5-TTS from pre-downloaded local models...")
             
             # Load F5-TTS with basic configuration first
-            # Try the simplest loading approach to get it working
-            logger.info(f"Attempting to load F5-TTS with model type: F5TTS_Base")
-            self.model = F5TTS(
-                model_type="F5TTS_Base",
-                device=self.device
-            )
+            # Fix: Remove model_type parameter - it's not valid for F5TTS constructor
+            logger.info(f"Attempting to load F5-TTS on device: {self.device}")
+            self.model = F5TTS(device=self.device)
             
             self.is_loaded = True
             load_time = time.time() - start_time

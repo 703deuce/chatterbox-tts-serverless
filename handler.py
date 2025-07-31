@@ -64,10 +64,12 @@ def load_optimized_models():
             if f5_tts_model.load_model():
                 logger.info("F5-TTS loaded successfully")
             else:
-                logger.warning("F5-TTS failed to load - expressive tags will use Chatterbox fallback")
+                logger.error("❌ F5-TTS failed to load - check f5_tts_integration.py logs for details")
+                logger.error("   F5-TTS will be unavailable for this session")
                 f5_tts_model = None
         except Exception as e:
-            logger.warning(f"F5-TTS not available: {e}")
+            logger.error(f"❌ F5-TTS initialization failed: {e}")
+            logger.error("   F5-TTS will be unavailable for this session")
             f5_tts_model = None
         
         # Load optimized voice library
@@ -777,13 +779,12 @@ def handler_optimized(job):
             
             # Check if F5-TTS is explicitly requested
             if model == 'f5_tts' and f5_tts_model is not None:
-                # Use F5-TTS for this request
-                try:
-                    return generate_f5_tts_optimized(job_input)
-                except Exception as e:
-                    logger.warning(f"F5-TTS failed, falling back to Chatterbox: {e}")
-                    # Fall through to standard TTS processing
-            
+                # Use F5-TTS for this request - no fallback, show real errors
+                return generate_f5_tts_optimized(job_input)
+            elif model == 'f5_tts' and f5_tts_model is None:
+                # F5-TTS requested but not available
+                return {"error": "F5-TTS model not available - check startup logs for loading errors"}
+
             # Check if text contains expressive tags
             text = job_input.get('text', '')
             if '{' in text and '}' in text:

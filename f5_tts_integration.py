@@ -129,10 +129,11 @@ class F5TTSWrapper:
             
             logger.info("Loading F5-TTS from pre-downloaded local models...")
             
-            # Load F5-TTS using directory path (official approach for local models)
-            # As per official docs: F5-TTS can load by specifying the model directory
+            # Load F5-TTS with basic configuration first
+            # Try the simplest loading approach to get it working
+            logger.info(f"Attempting to load F5-TTS with model type: F5TTS_Base")
             self.model = F5TTS(
-                model_type=local_model_dir,  # Point to directory containing model files
+                model_type="F5TTS_Base",
                 device=self.device
             )
             
@@ -192,18 +193,24 @@ class F5TTSWrapper:
                 logger.info(f"Using custom reference audio for tag: {tag_type}")
                 ref_audio = custom_tag_audio[tag_type]
             
-            # Prepare generation parameters for F5-TTS
-            gen_params = {
-                'text': text,
-                'ref_audio': ref_audio,
-                'ref_text': "",  # Can be empty for voice cloning
-                'exp_name': actual_tag,  # Use the expressive tag name
-                'remove_silence': True,
-                **kwargs
-            }
-            
-            # Generate audio using F5-TTS with expressive tag
-            audio_output, sample_rate = self.model.infer(**gen_params)
+            # Use basic F5-TTS inference parameters
+            # Start with minimal parameters and build up
+            try:
+                logger.info(f"F5-TTS inference with tag: {actual_tag}")
+                audio_output, sample_rate = self.model.infer(
+                    gen_text=text,
+                    ref_audio=ref_audio,
+                    ref_text="",
+                    remove_silence=True
+                )
+            except Exception as infer_error:
+                logger.error(f"F5-TTS infer failed: {infer_error}")
+                logger.info("Trying fallback F5-TTS inference without advanced params...")
+                # Try most basic inference
+                audio_output, sample_rate = self.model.infer(
+                    gen_text=text,
+                    ref_audio=ref_audio
+                )
             
             # Apply additional expressive effects if needed
             if tag_type in self.expressive_effects:

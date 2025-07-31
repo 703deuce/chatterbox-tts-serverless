@@ -113,8 +113,8 @@ class F5TTSWrapper:
             start_time = time.time()
             
             # Check for pre-downloaded models (downloaded during Docker build like S3Gen)
-            local_model_dir = "/workspace/f5_models/F5TTS_v1_Base"
-            local_model_file = f"{local_model_dir}/model_1250000.safetensors"
+            local_model_dir = "/workspace/f5_models/F5TTS_Base"
+            local_model_file = f"{local_model_dir}/model_1200000.safetensors"
             local_vocab_file = f"{local_model_dir}/vocab.txt"
             
             # Verify local files exist (should be downloaded during build)

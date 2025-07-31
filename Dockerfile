@@ -34,11 +34,11 @@ RUN echo "S3Gen model download completed. File size:" && ls -lh checkpoints/s3ge
 
 # Download F5-TTS models during build (like S3Gen approach)
 RUN echo "Downloading F5-TTS models..."
-RUN mkdir -p f5_models/F5TTS_v1_Base
-RUN wget -O f5_models/F5TTS_v1_Base/model_1250000.safetensors https://huggingface.co/SWivid/F5-TTS/resolve/main/F5TTS_v1_Base/model_1250000.safetensors
-RUN wget -O f5_models/F5TTS_v1_Base/vocab.txt https://huggingface.co/SWivid/F5-TTS/resolve/main/F5TTS_v1_Base/vocab.txt  
-RUN wget -O f5_models/F5TTS_v1_Base/config.json https://huggingface.co/SWivid/F5-TTS/resolve/main/F5TTS_v1_Base/config.json
-RUN echo "F5-TTS models download completed. Files:" && ls -lh f5_models/F5TTS_v1_Base/
+RUN mkdir -p f5_models/F5TTS_Base
+RUN wget -O f5_models/F5TTS_Base/model_1200000.safetensors https://huggingface.co/SWivid/F5-TTS/resolve/main/F5TTS_Base/model_1200000.safetensors
+RUN wget -O f5_models/F5TTS_Base/vocab.txt https://huggingface.co/SWivid/F5-TTS/resolve/main/F5TTS_Base/vocab.txt  
+RUN wget -O f5_models/F5TTS_Base/config.json https://huggingface.co/SWivid/F5-TTS/resolve/main/F5TTS_Base/config.json
+RUN echo "F5-TTS models download completed. Files:" && ls -lh f5_models/F5TTS_Base/
 
 # F5-TTS models setup (following official F5-TTS Docker pattern)
 # Updated: 2025-07-31 - Fixed Docker parse error, using VOLUME approach

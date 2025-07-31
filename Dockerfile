@@ -32,6 +32,14 @@ RUN echo "Downloading S3Gen model checkpoint (approx 1.06 GB)..."
 RUN wget -O checkpoints/s3gen.pt https://huggingface.co/ResembleAI/chatterbox/resolve/main/s3gen.pt
 RUN echo "S3Gen model download completed. File size:" && ls -lh checkpoints/s3gen.pt
 
+# Download F5-TTS models during build (like S3Gen approach)
+RUN echo "Downloading F5-TTS models..."
+RUN mkdir -p f5_models/F5TTS_v1_Base
+RUN wget -O f5_models/F5TTS_v1_Base/model_1250000.safetensors https://huggingface.co/SWivid/F5-TTS/resolve/main/F5TTS_v1_Base/model_1250000.safetensors
+RUN wget -O f5_models/F5TTS_v1_Base/vocab.txt https://huggingface.co/SWivid/F5-TTS/resolve/main/F5TTS_v1_Base/vocab.txt  
+RUN wget -O f5_models/F5TTS_v1_Base/config.json https://huggingface.co/SWivid/F5-TTS/resolve/main/F5TTS_v1_Base/config.json
+RUN echo "F5-TTS models download completed. Files:" && ls -lh f5_models/F5TTS_v1_Base/
+
 # F5-TTS models setup (following official F5-TTS Docker pattern)
 # Updated: 2025-07-31 - Fixed Docker parse error, using VOLUME approach
 RUN echo "Setting up F5-TTS model cache directory..."

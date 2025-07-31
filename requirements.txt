@@ -1,8 +1,6 @@
 runpod>=1.6.0
 git+https://github.com/davidbrowne17/chatterbox-streaming.git
 git+https://github.com/SWivid/F5-TTS.git
-torch>=2.3.0
-torchaudio>=2.3.0
 accelerate>=0.20.0
 huggingface-hub>=0.15.0
 pydantic>=1.8.0
@@ -16,7 +14,4 @@ pydub>=0.25.0
 librosa>=0.10.0
 regex>=2023.0.0
 transformers>=4.30.0
-datasets>=2.0.0
-torchdiffeq>=0.2.3
-einops>=0.6.0
-numpy<2.0 
+einops>=0.6.0 

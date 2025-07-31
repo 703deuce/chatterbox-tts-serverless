@@ -4,8 +4,14 @@ FROM python:3.10-slim
 # Set working directory
 WORKDIR /workspace
 
-# Force rebuild timestamp: 2025-07-31-03:15
-RUN echo "Build timestamp: $(date)" && echo "F5-TTS integration build v2"
+# Force rebuild timestamp: 2025-07-31-03:25
+RUN echo "Build timestamp: $(date)" && echo "F5-TTS integration build v3"
+
+# Install system dependencies including git for GitHub package installation
+RUN apt-get update && apt-get install -y \
+    git \
+    wget \
+    && rm -rf /var/lib/apt/lists/*
 
 # Note: PyTorch will be installed by chatterbox-streaming with correct versions (torch==2.6.0)
 

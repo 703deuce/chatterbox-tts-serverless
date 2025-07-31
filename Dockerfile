@@ -4,8 +4,8 @@ FROM python:3.10-slim
 # Set working directory
 WORKDIR /workspace
 
-# Force rebuild timestamp: 2025-07-31-02:50
-RUN echo "Build timestamp: $(date)" && echo "F5-TTS integration build"
+# Force rebuild timestamp: 2025-07-31-03:15
+RUN echo "Build timestamp: $(date)" && echo "F5-TTS integration build v2"
 
 # Note: PyTorch will be installed by chatterbox-streaming with correct versions (torch==2.6.0)
 

@@ -11,6 +11,9 @@ import time
 from typing import Optional, Dict, Any, Union
 from pathlib import Path
 
+# Configure logging first
+logger = logging.getLogger(__name__)
+
 try:
     # Try the main F5-TTS API imports (official pattern)
     from f5_tts.api import F5TTS
@@ -27,8 +30,6 @@ except ImportError as e:
 except Exception as e:
     F5_AVAILABLE = False
     logger.warning(f"F5-TTS import failed - expressive tags will fall back to Chatterbox. Error: {e}")
-
-logger = logging.getLogger(__name__)
 
 class F5TTSWrapper:
     """Wrapper class for F5-TTS with expressive capabilities"""

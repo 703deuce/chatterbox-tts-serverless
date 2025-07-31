@@ -51,23 +51,22 @@ RUN echo "Downloading F5-TTS models..."
 RUN mkdir -p /root/.cache/huggingface/hub
 RUN pip install huggingface_hub
 RUN python3 -c "
-from huggingface_hub import snapshot_download
-import os
-print('Downloading F5-TTS base model...')
-try:
-    snapshot_download(
-        repo_id='SWivid/F5-TTS',
-        local_dir='/workspace/f5_models',
-        allow_patterns=['F5TTS_v1_Base/*']
-    )
-    print('✅ F5-TTS model downloaded successfully')
-    # List downloaded files
-    import os
-    for root, dirs, files in os.walk('/workspace/f5_models'):
-        for file in files:
-            print(f'  {os.path.join(root, file)}')
-except Exception as e:
-    print(f'❌ F5-TTS download failed: {e}')
+from huggingface_hub import snapshot_download; \
+import os; \
+print('Downloading F5-TTS base model...'); \
+try: \
+    snapshot_download( \
+        repo_id='SWivid/F5-TTS', \
+        local_dir='/workspace/f5_models', \
+        allow_patterns=['F5TTS_v1_Base/*'] \
+    ); \
+    print('✅ F5-TTS model downloaded successfully'); \
+    import os; \
+    for root, dirs, files in os.walk('/workspace/f5_models'): \
+        for file in files: \
+            print(f'  {os.path.join(root, file)}') \
+except Exception as e: \
+    print(f'❌ F5-TTS download failed: {e}') \
 "
 
 # Copy application code

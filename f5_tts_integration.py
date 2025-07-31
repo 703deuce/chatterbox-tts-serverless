@@ -201,20 +201,32 @@ class F5TTSWrapper:
             # Start with minimal parameters and build up
             try:
                 logger.info(f"F5-TTS inference with tag: {actual_tag}")
+                logger.info(f"F5-TTS ref_audio path: {ref_audio_for_f5}")
+                logger.info(f"F5-TTS gen_text: '{text[:100]}...'")
+                
                 audio_output, sample_rate = self.model.infer(
                     gen_text=text,
                     ref_audio=ref_audio_for_f5,
                     ref_text="",
                     remove_silence=True
                 )
+                
+                logger.info(f"F5-TTS infer returned - audio shape: {audio_output.shape if hasattr(audio_output, 'shape') else type(audio_output)}")
+                logger.info(f"F5-TTS sample rate: {sample_rate}")
+                
             except Exception as infer_error:
                 logger.error(f"F5-TTS infer failed: {infer_error}")
                 logger.info("Trying fallback F5-TTS inference without advanced params...")
                 # Try most basic inference
-                audio_output, sample_rate = self.model.infer(
-                    gen_text=text,
-                    ref_audio=ref_audio_for_f5
-                )
+                try:
+                    audio_output, sample_rate = self.model.infer(
+                        gen_text=text,
+                        ref_audio=ref_audio_for_f5
+                    )
+                    logger.info(f"F5-TTS fallback infer returned - audio shape: {audio_output.shape if hasattr(audio_output, 'shape') else type(audio_output)}")
+                except Exception as fallback_error:
+                    logger.error(f"F5-TTS fallback infer also failed: {fallback_error}")
+                    return None
             
             # Apply additional expressive effects if needed
             if tag_type in self.expressive_effects:

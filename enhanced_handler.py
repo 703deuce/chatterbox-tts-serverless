@@ -227,23 +227,14 @@ class EnhancedTTSHandler:
         try:
             logger.debug(f"Processing Chatterbox segment {segment.index}: '{segment.text[:50]}...'")
             
-            # Filter parameters for Chatterbox - only pass what it accepts
+            # Chatterbox only accepts text and audio_prompt_array for basic generation
+            # All other parameters cause "unexpected keyword argument" errors
             chatterbox_params = {
                 'text': segment.text,
                 'audio_prompt_array': speaker_embedding
             }
             
-            # Only add Chatterbox-specific parameters if they exist
-            if 'chunk_size' in generation_params:
-                chatterbox_params['chunk_size'] = generation_params['chunk_size']
-            if 'exaggeration' in generation_params:
-                chatterbox_params['exaggeration'] = generation_params['exaggeration']
-            if 'cfg_weight' in generation_params:
-                chatterbox_params['cfg_weight'] = generation_params['cfg_weight']
-            if 'temperature' in generation_params:
-                chatterbox_params['temperature'] = generation_params['temperature']
-            
-            # Generate audio using Chatterbox
+            # Generate audio using Chatterbox with minimal parameters
             audio = self.chatterbox_model.generate(**chatterbox_params)
             
             # Convert to numpy if needed

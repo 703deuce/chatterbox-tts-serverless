@@ -11,6 +11,7 @@ RUN echo "Build timestamp: $(date)" && echo "F5-TTS integration build v3"
 RUN apt-get update && apt-get install -y \
     git \
     wget \
+    ffmpeg \
     && rm -rf /var/lib/apt/lists/*
 
 # Note: PyTorch will be installed by chatterbox-streaming with correct versions (torch==2.6.0)

@@ -257,12 +257,13 @@ class F5TTSWrapper:
                 logger.info("Trying fallback F5-TTS inference without advanced params...")
                 # Try most basic inference
                 try:
-                    # Minimal F5-TTS parameters
+                    # Minimal F5-TTS parameters - ref_text is required
                     output_wav_path = tempfile.mktemp(suffix=".wav")
                     wav, sample_rate, _ = self.model.infer(
-                        ref_file=ref_audio_for_f5,  # Only required parameters
-                        gen_text=text,
-                        file_wave=output_wav_path
+                        ref_file=ref_audio_for_f5,  # Reference audio file
+                        ref_text="",                # Required ref_text parameter (empty for auto-transcription)
+                        gen_text=text,              # Text to generate
+                        file_wave=output_wav_path   # Output file
                     )
                     audio_output = wav
                     logger.info(f"F5-TTS fallback infer returned - audio shape: {audio_output.shape if hasattr(audio_output, 'shape') else type(audio_output)}")
@@ -275,6 +276,9 @@ class F5TTSWrapper:
                         
                 except Exception as fallback_error:
                     logger.error(f"F5-TTS fallback infer also failed: {fallback_error}")
+                    # If ffmpeg error, provide helpful message
+                    if "ffmpeg" in str(fallback_error).lower():
+                        logger.error("F5-TTS requires ffmpeg for audio processing. Check container build.")
                     return None
             
             # Apply additional expressive effects if needed

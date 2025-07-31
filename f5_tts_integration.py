@@ -34,7 +34,7 @@ except Exception as e:
 class F5TTSWrapper:
     """Wrapper class for F5-TTS with expressive capabilities"""
     
-    def __init__(self, device: str = "cuda", model_type: str = "F5-TTS"):
+    def __init__(self, device: str = "cuda", model_type: str = "F5TTS_v1_Base"):
         self.device = device
         self.model_type = model_type
         self.model = None
@@ -47,7 +47,7 @@ class F5TTSWrapper:
                 'builtin': True
             },
             'shout': {
-                'description': 'Yelling/shouting',
+                'description': 'Yelling/shouting', 
                 'builtin': True
             },
             'happy': {
@@ -64,39 +64,34 @@ class F5TTSWrapper:
             }
         }
         
-        # Extended tags via reference audio mapping
+        # Extended tags mapped to native F5-TTS tags
         self.extended_tags = {
-            'yell': 'shout',      # Map to native shout
-            'excited': 'happy',   # Map to native happy
-            'calm': 'whisper',    # Map to native whisper
-            'nervous': 'sad',     # Map to native sad
-            'confident': 'happy'  # Map to native happy
+            'excited': 'happy',
+            'calm': 'whisper', 
+            'nervous': 'whisper',
+            'confident': 'happy',
+            'loud': 'shout',
+            'quiet': 'whisper'
         }
         
-        # Expressive tag configurations (for reference audio enhancement)
-        self.tag_configs = {
+        # Audio effects for expressive enhancement
+        self.expressive_effects = {
             'whisper': {
-                'speed': 0.8,
-                'volume_scale': 0.6,
+                'speed': 0.9,
+                'volume_scale': 0.7,
                 'pitch_shift': -0.1,
                 'emphasis': 0.3
             },
             'shout': {
-                'speed': 1.2,
-                'volume_scale': 1.3,
-                'pitch_shift': 0.2,
-                'emphasis': 0.9
-            },
-            'angry': {
                 'speed': 1.1,
-                'volume_scale': 1.2,
+                'volume_scale': 1.3,
                 'pitch_shift': 0.1,
                 'emphasis': 0.8
             },
             'sad': {
-                'speed': 0.9,
+                'speed': 0.85,
                 'volume_scale': 0.8,
-                'pitch_shift': -0.1,
+                'pitch_shift': -0.05,
                 'emphasis': 0.4
             },
             'happy': {
@@ -108,7 +103,7 @@ class F5TTSWrapper:
         }
     
     def load_model(self):
-        """Load F5-TTS model"""
+        """Load F5-TTS model from local files (like Chatterbox does with S3Gen)"""
         if not F5_AVAILABLE:
             logger.error("F5-TTS not available - cannot load model")
             return False
@@ -117,23 +112,59 @@ class F5TTSWrapper:
             logger.info(f"Loading F5-TTS model ({self.model_type}) on {self.device}")
             start_time = time.time()
             
-            # Load F5-TTS model
-            self.model = F5TTS(
-                model_type=self.model_type,
-                ckpt_file=None,  # Use default checkpoint
-                vocab_file=None,  # Use default vocab
-                ode_method="euler",
-                use_ema=True,
-                device=self.device
-            )
+            # Check for pre-downloaded models (like checkpoints/s3gen.pt for Chatterbox)
+            local_model_dir = "/workspace/f5_models/F5TTS_v1_Base"
+            local_model_file = f"{local_model_dir}/model_1250000.safetensors"
+            local_vocab_file = f"{local_model_dir}/vocab.txt"
             
-            load_time = time.time() - start_time
-            self.is_loaded = True
-            logger.info(f"F5-TTS model loaded successfully in {load_time:.2f}s")
-            return True
+            # Try to load from local files first (PACKAGED APPROACH like Chatterbox)
+            if Path(local_model_file).exists() and Path(local_vocab_file).exists():
+                logger.info("Loading F5-TTS from pre-downloaded local models...")
+                try:
+                    self.model = F5TTS(
+                        model_type=self.model_type,
+                        ckpt_file=local_model_file,  # Use local checkpoint
+                        vocab_file=local_vocab_file,  # Use local vocab
+                        ode_method="euler",
+                        use_ema=True,
+                        device=self.device
+                    )
+                    
+                    load_time = time.time() - start_time
+                    self.is_loaded = True
+                    logger.info(f"F5-TTS loaded from local models in {load_time:.2f}s")
+                    return True
+                    
+                except Exception as local_error:
+                    logger.warning(f"Local F5-TTS model loading failed: {local_error}")
+                    # Fall through to download attempt
+            else:
+                logger.warning(f"Local F5-TTS models not found at {local_model_dir}")
+                logger.info("Expected files:")
+                logger.info(f"  - {local_model_file}")
+                logger.info(f"  - {local_vocab_file}")
+            
+            # Fallback: Try auto-download (will likely fail in serverless)
+            logger.info("Attempting F5-TTS auto-download (may fail in serverless environment)...")
+            try:
+                self.model = F5TTS(
+                    model_type=self.model_type,
+                    device=self.device
+                )
+                
+                load_time = time.time() - start_time
+                self.is_loaded = True
+                logger.info(f"F5-TTS loaded via auto-download in {load_time:.2f}s")
+                return True
+                
+            except Exception as download_error:
+                logger.error(f"F5-TTS auto-download failed: {download_error}")
+                logger.error("This is expected in serverless environments without internet access")
+                logger.error("F5-TTS requires pre-downloaded models in the Docker image")
+                return False
             
         except Exception as e:
-            logger.error(f"Failed to load F5-TTS model: {e}")
+            logger.error(f"Failed to initialize F5-TTS: {e}")
             return False
     
     def generate_expressive(
@@ -196,8 +227,8 @@ class F5TTSWrapper:
             audio_output, sample_rate = self.model.infer(**gen_params)
             
             # Apply additional expressive effects if needed
-            if tag_type in self.tag_configs:
-                config = self.tag_configs[tag_type]
+            if tag_type in self.expressive_effects:
+                config = self.expressive_effects[tag_type]
                 audio_output = self._apply_expressive_effects(
                     audio_output, 
                     config, 

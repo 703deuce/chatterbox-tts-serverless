@@ -12,13 +12,21 @@ from typing import Optional, Dict, Any, Union
 from pathlib import Path
 
 try:
+    # Try the main F5-TTS API imports (official pattern)
     from f5_tts.api import F5TTS
-    from f5_tts.model import DiT, UNetT
     from f5_tts.infer.utils_infer import load_model, infer_process
+    
+    # Additional imports for direct inference
+    import tempfile
+    import torchaudio
     F5_AVAILABLE = True
-except ImportError:
+    logger.info("F5-TTS successfully imported")
+except ImportError as e:
     F5_AVAILABLE = False
-    logging.warning("F5-TTS not available - expressive tags will fall back to Chatterbox")
+    logger.warning(f"F5-TTS not available - expressive tags will fall back to Chatterbox. Import error: {e}")
+except Exception as e:
+    F5_AVAILABLE = False
+    logger.warning(f"F5-TTS import failed - expressive tags will fall back to Chatterbox. Error: {e}")
 
 logger = logging.getLogger(__name__)
 

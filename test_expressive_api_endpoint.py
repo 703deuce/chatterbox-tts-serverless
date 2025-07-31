@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 
 # RunPod API Configuration
 API_BASE_URL = "https://api.runpod.ai/v2/c2wmx1ln5ccp6c/run"
-API_KEY = "YOUR_API_KEY"  # Replace with your actual API key
+API_KEY = "rpa_C55TBQG7H6FM7G3Q7A6JM7ZJCDKA3I2J3EO0TAH8fxyddo"  # Your actual API key
 
 class ExpressiveTTSAPITester:
     """Test the enhanced expressive TTS API endpoint"""
@@ -32,7 +32,7 @@ class ExpressiveTTSAPITester:
         self.base_url = API_BASE_URL
     
     def make_request(self, payload: Dict[str, Any]) -> Dict[str, Any]:
-        """Make a request to the RunPod API"""
+        """Make a request to the RunPod API and poll for results"""
         try:
             logger.info(f"Making API request to {self.base_url}")
             logger.info(f"Payload: {json.dumps(payload, indent=2)}")
@@ -41,7 +41,7 @@ class ExpressiveTTSAPITester:
                 self.base_url,
                 headers=self.headers,
                 json=payload,
-                timeout=300  # 5 minutes timeout for TTS generation
+                timeout=60  # Initial request timeout
             )
             
             response.raise_for_status()
@@ -50,11 +50,58 @@ class ExpressiveTTSAPITester:
             logger.info(f"API Response Status: {response.status_code}")
             logger.info(f"Response keys: {list(result.keys())}")
             
-            return result
+            # Check if this is an async response that needs polling
+            if 'id' in result and 'status' in result:
+                job_id = result['id']
+                logger.info(f"Job submitted with ID: {job_id}")
+                
+                # Poll for results
+                return self.poll_job_result(job_id, max_wait=300)  # 5 minutes max
+            else:
+                # Immediate response
+                return result
             
         except requests.exceptions.RequestException as e:
             logger.error(f"API request failed: {e}")
             raise
+    
+    def poll_job_result(self, job_id: str, max_wait: int = 300) -> Dict[str, Any]:
+        """Poll for job completion"""
+        status_url = f"https://api.runpod.ai/v2/c2wmx1ln5ccp6c/status/{job_id}"
+        
+        logger.info(f"Polling for job results: {job_id}")
+        
+        for i in range(max_wait):
+            try:
+                response = requests.get(
+                    status_url,
+                    headers={"Authorization": f"Bearer {self.api_key}"}
+                )
+                
+                if response.status_code == 200:
+                    result = response.json()
+                    status = result.get('status', 'unknown')
+                    
+                    if status == 'COMPLETED':
+                        logger.info(f"Job completed successfully after {i+1} seconds")
+                        return {'output': result.get('output')}
+                    elif status == 'FAILED':
+                        error_msg = result.get('error', 'Unknown error')
+                        logger.error(f"Job failed: {error_msg}")
+                        raise RuntimeError(f"Job failed: {error_msg}")
+                    elif status in ['IN_QUEUE', 'IN_PROGRESS']:
+                        if i % 10 == 0:  # Log every 10 seconds
+                            logger.info(f"Job status: {status} (waiting... {i+1}s)")
+                    else:
+                        logger.info(f"Job status: {status}")
+                        
+                time.sleep(1)
+                
+            except requests.exceptions.RequestException as e:
+                logger.error(f"Error polling job: {e}")
+                break
+        
+        raise RuntimeError(f"Job timed out after {max_wait} seconds")
     
     def save_audio_response(self, response: Dict[str, Any], filename: str) -> bool:
         """Save audio from API response to file"""

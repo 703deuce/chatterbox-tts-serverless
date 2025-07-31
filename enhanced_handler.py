@@ -227,15 +227,12 @@ class EnhancedTTSHandler:
         try:
             logger.debug(f"Processing Chatterbox segment {segment.index}: '{segment.text[:50]}...'")
             
-            # Chatterbox only accepts text and audio_prompt_array for basic generation
-            # All other parameters cause "unexpected keyword argument" errors
-            chatterbox_params = {
-                'text': segment.text,
-                'audio_prompt_array': speaker_embedding
-            }
-            
-            # Generate audio using Chatterbox with minimal parameters
-            audio = self.chatterbox_model.generate(**chatterbox_params)
+            # Use ONLY the parameters that the original Chatterbox accepts
+            # Based on the existing working handler.py: text and audio_prompt_array
+            audio = self.chatterbox_model.generate(
+                text=segment.text,
+                audio_prompt_array=speaker_embedding
+            )
             
             # Convert to numpy if needed
             if isinstance(audio, torch.Tensor):

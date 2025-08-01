@@ -1,0 +1,14 @@
+{
+  "id": "3e75ae82",
+  "name": "TestWavVoice",
+  "speaker_name": "TestWavVoice",
+  "description": "Custom voice created from test.wav using ChatTTS",
+  "gender": "unknown",
+  "accent": "custom",
+  "style": "natural",
+  "created_from": "test.wav",
+  "embedding_file": "embeddings/3e75ae82.pkl.gz",
+  "duration": 32.0,
+  "type": "chattts_embedding",
+  "format": "new_chattts"
+}

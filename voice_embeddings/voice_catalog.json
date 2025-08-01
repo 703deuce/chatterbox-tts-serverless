@@ -405,5 +405,16 @@
     "sample_rate": 24000,
     "created_at": "2025-07-27T14:07:59.610979",
     "type": "chattts_embedding"
+  },
+  "3e75ae82": {
+    "name": "TestWavVoice",
+    "speaker_name": "TestWavVoice",
+    "description": "Custom voice created from test.wav using ChatTTS",
+    "gender": "unknown",
+    "accent": "custom",
+    "style": "natural",
+    "embedding_file": "embeddings/3e75ae82.pkl.gz",
+    "duration": 32.0,
+    "type": "chattts_embedding"
   }
 }

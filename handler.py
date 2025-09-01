@@ -544,73 +544,13 @@ def generate_voice_conversion_optimized(job_input: Dict[str, Any]) -> Dict[str, 
         }
 
 def generate_voice_transfer_optimized(job_input: Dict[str, Any]) -> Dict[str, Any]:
-    """OPTIMIZED: Generate voice transfer using direct audio arrays"""
+    """ENHANCED: Generate voice transfer supporting both base64 and file URLs"""
     try:
-        # Extract and validate required parameters
-        input_audio_b64 = job_input.get('input_audio')
-        transfer_mode = job_input.get('transfer_mode')
+        # Import enhanced voice transfer functionality
+        from enhanced_voice_transfer import generate_voice_transfer_enhanced
         
-        if not input_audio_b64:
-            raise ValueError("input_audio is required")
-        if transfer_mode not in ['embedding', 'audio']:
-            raise ValueError("transfer_mode must be 'embedding' or 'audio'")
-        
-        # Decode input audio (inline utility)
-        def base64_to_audio(audio_b64):
-            import base64
-            import io
-            import soundfile as sf
-            audio_data = base64.b64decode(audio_b64)
-            audio_buffer = io.BytesIO(audio_data)
-            audio_array, sample_rate = sf.read(audio_buffer)
-            return audio_array, sample_rate
-        
-        input_audio_array, input_sr = base64_to_audio(input_audio_b64)
-        logger.info(f"Voice transfer: {transfer_mode} mode - Input audio: {input_sr}Hz, {len(input_audio_array)} samples")
-        
-        if transfer_mode == 'embedding':
-            # OPTIMIZATION: WAV to Voice Embedding mode using direct arrays
-            voice_name = job_input.get('voice_name')
-            voice_id = job_input.get('voice_id')
-            
-            if not voice_name and not voice_id:
-                raise ValueError("voice_name or voice_id is required for embedding mode")
-            
-            # Use optimized voice loading
-            audio_prompt_array = handle_voice_cloning_source_optimized(job_input)
-            if audio_prompt_array is not None:
-                target_audio_array = audio_prompt_array
-                target_sr = 24000  # Default sample rate for embeddings
-                logger.info(f"OPTIMIZED: Loaded target voice directly from embeddings: {len(target_audio_array)} samples")
-                
-                transfer_info = {
-                    "transfer_mode": "embedding",
-                    "target_voice": voice_name or voice_id,
-                    "source": "voice_library",
-                    "voice_loading": "optimized_direct_access"
-                }
-                optimization_indicator = "direct_audio_array"
-            else:
-                return {
-                    "error": "Voice not found in library",
-                    "message": f"Voice '{voice_name or voice_id}' not found. Use list_local_voices operation to see available voices."
-                }
-                
-        elif transfer_mode == 'audio':
-            # WAV to WAV mode (no optimization needed - direct audio)
-            target_audio_b64 = job_input.get('target_audio')
-            if not target_audio_b64:
-                raise ValueError("target_audio is required for audio mode")
-            
-            target_audio_array, target_sr = base64_to_audio(target_audio_b64)
-            logger.info(f"Using provided target audio: {target_sr}Hz, {len(target_audio_array)} samples")
-            
-            transfer_info = {
-                "transfer_mode": "audio",
-                "target_source": "user_provided_audio",
-                "target_duration": len(target_audio_array) / target_sr
-            }
-            optimization_indicator = None  # No optimization for direct audio mode
+        # Use the enhanced version that supports URLs and file paths
+        return generate_voice_transfer_enhanced(job_input)
         
         # Process audio for S3Gen model (same logic for both modes)
         logger.info("Processing audio for voice transfer...")

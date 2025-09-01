@@ -34,7 +34,7 @@ optimized_tts_model: Optional[OptimizedChatterboxTTS] = None
 optimized_voice_library: Optional[OptimizedVoiceLibrary] = None
 legacy_voice_library: Optional[LocalVoiceLibrary] = None  # Fallback
 s3gen_model: Optional[S3Gen] = None
-f5_tts_model = None  # F5-TTS for expressive tags
+# F5-TTS removed to save GPU memory
 
 # Automatically detect the best available device
 if torch.cuda.is_available():
@@ -46,7 +46,7 @@ else:
 
 def load_optimized_models():
     """Load optimized TTS model and voice library"""
-    global optimized_tts_model, optimized_voice_library, legacy_voice_library, s3gen_model, f5_tts_model
+    global optimized_tts_model, optimized_voice_library, legacy_voice_library, s3gen_model
     
     logger.info(f"Loading optimized models on device: {device}")
     
@@ -56,21 +56,8 @@ def load_optimized_models():
         optimized_tts_model = create_optimized_tts(device=device)
         logger.info("OptimizedChatterboxTTS loaded successfully")
         
-        # Load F5-TTS for expressive tags
-        logger.info("Loading F5-TTS...")
-        try:
-            from f5_tts_integration import F5TTSWrapper
-            f5_tts_model = F5TTSWrapper(device=device)
-            if f5_tts_model.load_model():
-                logger.info("F5-TTS loaded successfully")
-            else:
-                logger.error("❌ F5-TTS failed to load - check f5_tts_integration.py logs for details")
-                logger.error("   F5-TTS will be unavailable for this session")
-                f5_tts_model = None
-        except Exception as e:
-            logger.error(f"❌ F5-TTS initialization failed: {e}")
-            logger.error("   F5-TTS will be unavailable for this session")
-            f5_tts_model = None
+        # F5-TTS removed to save GPU memory
+        logger.info("F5-TTS disabled to conserve GPU memory")
         
         # Load optimized voice library
         logger.info("Loading OptimizedVoiceLibrary...")
@@ -542,6 +529,15 @@ def generate_voice_conversion_optimized(job_input: Dict[str, Any]) -> Dict[str, 
             "error": f"Voice conversion failed: {str(e)}",
             "message": "An unexpected error occurred during voice conversion"
         }
+    finally:
+        # Clean up GPU memory after voice conversion
+        try:
+            import gc
+            torch.cuda.empty_cache()
+            gc.collect()
+            logger.info("GPU memory cleaned up after voice conversion")
+        except Exception as cleanup_error:
+            logger.warning(f"Failed to clean up GPU memory: {cleanup_error}")
 
 def is_firebase_storage_url(url: str) -> bool:
     """Check if URL is a Firebase Storage URL"""
@@ -872,28 +868,28 @@ def generate_voice_transfer_optimized(job_input: Dict[str, Any]) -> Dict[str, An
         
         if not return_download_url:
             # Convert to base64 (original method)
-            def audio_to_base64(audio_array, sample_rate):
-                buffer = io.BytesIO()
-                sf.write(buffer, audio_array, sample_rate, format='WAV')
-                buffer.seek(0)
-                audio_b64 = base64.b64encode(buffer.read()).decode('utf-8')
-                return audio_b64
-            
-            transferred_audio_b64 = audio_to_base64(transferred_wav, S3GEN_SR)
-            
+        def audio_to_base64(audio_array, sample_rate):
+            buffer = io.BytesIO()
+            sf.write(buffer, audio_array, sample_rate, format='WAV')
+            buffer.seek(0)
+            audio_b64 = base64.b64encode(buffer.read()).decode('utf-8')
+            return audio_b64
+        
+        transferred_audio_b64 = audio_to_base64(transferred_wav, S3GEN_SR)
+        
             # Prepare response with base64 audio
-            response = {
-                "audio": transferred_audio_b64,
-                "sample_rate": S3GEN_SR,
-                "duration": output_duration,
-                "format": "wav",
-                "model": "s3gen",
-                "operation": "voice_transfer",
-                "transfer_info": transfer_info,
-                "input_duration": input_duration,
+        response = {
+            "audio": transferred_audio_b64,
+            "sample_rate": S3GEN_SR,
+            "duration": output_duration,
+            "format": "wav",
+            "model": "s3gen",
+            "operation": "voice_transfer",
+            "transfer_info": transfer_info,
+            "input_duration": input_duration,
                 "processing_time": "30-90 seconds typical",
                 "output_method": "base64"
-            }
+        }
         
         # Add optimization indicator for embedding mode
         if optimization_indicator:
@@ -907,73 +903,17 @@ def generate_voice_transfer_optimized(job_input: Dict[str, Any]) -> Dict[str, An
             "error": f"Voice transfer failed: {str(e)}",
             "message": "An unexpected error occurred during voice transfer"
         }
+    finally:
+        # Clean up GPU memory after voice transfer
+        try:
+            import gc
+            torch.cuda.empty_cache()
+            gc.collect()
+            logger.info("GPU memory cleaned up after voice transfer")
+        except Exception as cleanup_error:
+            logger.warning(f"Failed to clean up GPU memory: {cleanup_error}")
 
-def generate_f5_tts_optimized(job_input: Dict[str, Any]) -> Dict[str, Any]:
-    """OPTIMIZED: Generate F5-TTS using the loaded F5TTSWrapper"""
-    try:
-        # Extract and validate text
-        text = job_input.get('text', 'Hello, this is a test.')
-        if not text or len(text.strip()) == 0:
-            raise ValueError("Text cannot be empty")
-        if len(text) > 5000:
-            raise ValueError("Text too long (max 5000 characters)")
-        
-        logger.info(f"F5-TTS request - Text: {len(text)} chars")
-        
-        # Get reference audio if provided
-        reference_audio = job_input.get('reference_audio')
-        voice_id = job_input.get('voice_id')
-        
-        # Get speaker embedding
-        speaker_embedding = None
-        if voice_id:
-            try:
-                speaker_embedding = get_speaker_embedding(voice_id)
-                logger.info(f"Using voice embedding for: {voice_id}")
-            except Exception as e:
-                logger.warning(f"Failed to get speaker embedding for {voice_id}: {e}")
-        
-        # Generate audio using F5-TTS
-        logger.info("Starting F5-TTS generation...")
-        start_time = time.time()
-        
-        # Use F5TTSWrapper to generate audio
-        audio_array = f5_tts_model.generate_expressive(
-            text=text,
-            tag_type="normal",  # Default tag
-            speaker_embedding=speaker_embedding,
-            reference_audio=reference_audio
-        )
-        
-        if audio_array is None:
-            raise RuntimeError("F5-TTS returned no audio")
-        
-        total_time = time.time() - start_time
-        logger.info(f"F5-TTS generation complete - Duration: {total_time:.2f}s")
-        
-        # Convert to base64
-        sample_rate = 24000  # F5-TTS default
-        buffer = io.BytesIO()
-        sf.write(buffer, audio_array, sample_rate, format='WAV')
-        buffer.seek(0)
-        audio_base64 = base64.b64encode(buffer.read()).decode('utf-8')
-        
-        # Prepare response
-        response = {
-            "audio": audio_base64,
-            "sample_rate": sample_rate,
-            "text": text,
-            "mode": "f5_tts",
-            "generation_time": total_time,
-            "audio_duration": len(audio_array) / sample_rate
-        }
-        
-        logger.info(f"F5-TTS successful - Audio: {len(audio_array):,} samples")
-        return response
-        
-    except Exception as e:
-        logger.error(f"F5-TTS generation failed: {e}")
-        raise RuntimeError(f"F5-TTS generation failed: {str(e)}")
+# F5-TTS function removed to save GPU memory
 
 def handler_optimized(job):
     """OPTIMIZED: Main handler function using direct audio arrays"""
@@ -992,13 +932,9 @@ def handler_optimized(job):
             # Check for explicit model selection
             model = job_input.get('model', 'chatterbox')
             
-            # Check if F5-TTS is explicitly requested
-            if model == 'f5_tts' and f5_tts_model is not None:
-                # Use F5-TTS for this request - no fallback, show real errors
-                return generate_f5_tts_optimized(job_input)
-            elif model == 'f5_tts' and f5_tts_model is None:
-                # F5-TTS requested but not available
-                return {"error": "F5-TTS model not available - check startup logs for loading errors"}
+            # F5-TTS removed to save GPU memory
+            if model == 'f5_tts':
+                return {"error": "F5-TTS disabled to conserve GPU memory. Use 'chatterbox' model instead."}
 
             # Check if text contains expressive tags
             text = job_input.get('text', '')
@@ -1080,6 +1016,15 @@ def handler_optimized(job):
     except Exception as e:
         logger.error(f"Optimized handler error: {e}")
         return {"error": str(e)}
+    finally:
+        # Global GPU memory cleanup after each request
+        try:
+            import gc
+            torch.cuda.empty_cache()
+            gc.collect()
+            logger.info("Global GPU memory cleaned up after request")
+        except Exception as cleanup_error:
+            logger.warning(f"Failed to clean up global GPU memory: {cleanup_error}")
 
 # Performance comparison function
 def compare_performance():

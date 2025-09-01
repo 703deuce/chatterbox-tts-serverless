@@ -636,18 +636,18 @@ def upload_audio_to_firebase(audio_array, sample_rate, storage_bucket, storage_p
             temp_path = temp_file.name
         
         try:
-            # Prepare Firebase Storage upload URL
+            # Prepare Firebase Storage upload URL - CORRECT format for uploads
             import urllib.parse
-            # URL encode the storage path properly for Firebase Storage
+            # URL encode the storage path for the name parameter
             encoded_path = urllib.parse.quote(storage_path, safe='')
-            upload_url = f"https://firebasestorage.googleapis.com/v0/b/{storage_bucket}/o/{encoded_path}"
+            upload_url = f"https://firebasestorage.googleapis.com/v0/b/{storage_bucket}/o?name={encoded_path}"
             logger.info(f"Firebase upload URL: {upload_url}")
             
             # Read file data
             with open(temp_path, 'rb') as f:
                 audio_data = f.read()
             
-            # Upload to Firebase Storage
+            # Upload to Firebase Storage using correct REST API format
             headers = {
                 'Content-Type': 'audio/wav',
                 'Content-Length': str(len(audio_data))

@@ -543,14 +543,251 @@ def generate_voice_conversion_optimized(job_input: Dict[str, Any]) -> Dict[str, 
             "message": "An unexpected error occurred during voice conversion"
         }
 
-def generate_voice_transfer_optimized(job_input: Dict[str, Any]) -> Dict[str, Any]:
-    """ENHANCED: Generate voice transfer supporting both base64 and file URLs"""
-    try:
-        # Import enhanced voice transfer functionality
-        from enhanced_voice_transfer import generate_voice_transfer_enhanced
+def is_firebase_storage_url(url: str) -> bool:
+    """Check if URL is a Firebase Storage URL"""
+    return 'firebasestorage.app' in url or 'googleapis.com' in url
+
+def construct_firebase_url(storage_bucket: str, path: str) -> str:
+    """
+    Construct Firebase Storage download URL from bucket and path
+    
+    Args:
+        storage_bucket: Firebase storage bucket name
+        path: File path in storage (e.g., "users/tts/user123/audio.wav")
         
-        # Use the enhanced version that supports URLs and file paths
-        return generate_voice_transfer_enhanced(job_input)
+    Returns:
+        str: Direct download URL
+    """
+    import urllib.parse
+    encoded_path = urllib.parse.quote(path, safe='/')
+    firebase_url = f"https://firebasestorage.googleapis.com/v0/b/{storage_bucket}/o/{encoded_path}?alt=media"
+    logger.info(f"Constructed Firebase URL: {firebase_url}")
+    return firebase_url
+
+def download_audio_from_url(url: str, timeout: int = 30) -> tuple:
+    """
+    Download audio file from URL and return audio array and sample rate
+    Supports regular URLs and Firebase Storage URLs
+    """
+    try:
+        logger.info(f"Downloading audio from URL: {url}")
+        
+        # Validate URL
+        from urllib.parse import urlparse
+        parsed = urlparse(url)
+        if not parsed.scheme or not parsed.netloc:
+            raise ValueError(f"Invalid URL format: {url}")
+        
+        # Add special handling for Firebase Storage URLs
+        headers = {}
+        if is_firebase_storage_url(url):
+            logger.info("Detected Firebase Storage URL")
+            headers['User-Agent'] = 'Mozilla/5.0 (compatible; TTS-API/1.0)'
+        
+        # Download file
+        import requests
+        response = requests.get(url, timeout=timeout, stream=True, headers=headers)
+        response.raise_for_status()
+        
+        # Save to temporary file
+        import tempfile
+        import os
+        with tempfile.NamedTemporaryFile(suffix='.wav', delete=False) as temp_file:
+            for chunk in response.iter_content(chunk_size=8192):
+                temp_file.write(chunk)
+            temp_path = temp_file.name
+        
+        try:
+            # Load audio using librosa
+            audio_array, sample_rate = librosa.load(temp_path, sr=None)
+            logger.info(f"Successfully downloaded audio: {sample_rate}Hz, {len(audio_array)} samples")
+            return audio_array, sample_rate
+            
+        finally:
+            # Clean up temporary file
+            if os.path.exists(temp_path):
+                os.unlink(temp_path)
+                
+    except Exception as e:
+        raise ValueError(f"Failed to download/process audio from URL: {e}")
+
+def upload_audio_to_firebase(audio_array, sample_rate, storage_bucket, storage_path):
+    """
+    Upload audio array to Firebase Storage and return download URL
+    
+    Args:
+        audio_array: Audio data as numpy array
+        sample_rate: Sample rate of audio
+        storage_bucket: Firebase storage bucket name
+        storage_path: Storage path for the output file
+        
+    Returns:
+        str: Firebase download URL for the uploaded file
+    """
+    try:
+        import requests
+        import tempfile
+        import os
+        import soundfile as sf
+        
+        # Save audio to temporary file
+        with tempfile.NamedTemporaryFile(suffix='.wav', delete=False) as temp_file:
+            sf.write(temp_file.name, audio_array, sample_rate, format='WAV')
+            temp_path = temp_file.name
+        
+        try:
+            # Prepare Firebase Storage upload URL
+            import urllib.parse
+            encoded_path = urllib.parse.quote(storage_path, safe='/')
+            upload_url = f"https://firebasestorage.googleapis.com/v0/b/{storage_bucket}/o/{encoded_path}"
+            
+            # Read file data
+            with open(temp_path, 'rb') as f:
+                audio_data = f.read()
+            
+            # Upload to Firebase Storage
+            headers = {
+                'Content-Type': 'audio/wav',
+                'Content-Length': str(len(audio_data))
+            }
+            
+            response = requests.post(upload_url, data=audio_data, headers=headers)
+            response.raise_for_status()
+            
+            # Construct download URL
+            download_url = construct_firebase_url(storage_bucket, storage_path)
+            
+            logger.info(f"Successfully uploaded audio to Firebase Storage: {download_url}")
+            return download_url
+            
+        finally:
+            # Clean up temporary file
+            if os.path.exists(temp_path):
+                os.unlink(temp_path)
+                
+    except Exception as e:
+        logger.error(f"Failed to upload to Firebase Storage: {e}")
+        raise ValueError(f"Firebase Storage upload failed: {e}")
+
+def load_audio_from_input_enhanced(audio_input, is_url=False, storage_bucket=None, storage_path=None):
+    """
+    Load audio from either base64 string, URL, or Firebase Storage path
+    """
+    if storage_bucket and storage_path:
+        # Use Firebase Storage path
+        firebase_url = construct_firebase_url(storage_bucket, storage_path)
+        return download_audio_from_url(firebase_url)
+    elif is_url:
+        return download_audio_from_url(audio_input)
+    else:
+        # Handle base64 input (existing logic)
+        import base64
+        import io
+        import soundfile as sf
+        try:
+            audio_data = base64.b64decode(audio_input)
+            audio_buffer = io.BytesIO(audio_data)
+            audio_array, sample_rate = sf.read(audio_buffer)
+            return audio_array, sample_rate
+        except Exception as e:
+            raise ValueError(f"Failed to decode base64 audio: {e}")
+
+def generate_voice_transfer_optimized(job_input: Dict[str, Any]) -> Dict[str, Any]:
+    """OPTIMIZED: Generate voice transfer using direct audio arrays with Firebase Storage support"""
+    try:
+        # Extract and validate required parameters
+        input_audio = job_input.get('input_audio')
+        transfer_mode = job_input.get('transfer_mode')
+        
+        if not input_audio and not job_input.get('input_storage_path'):
+            raise ValueError("input_audio or input_storage_path is required")
+        if transfer_mode not in ['embedding', 'audio']:
+            raise ValueError("transfer_mode must be 'embedding' or 'audio'")
+        
+        # Extract Firebase Storage configuration
+        storage_bucket = job_input.get('storage_bucket', 'aitts-d4c6d.firebasestorage.app')
+        input_storage_path = job_input.get('input_storage_path')
+        
+        # Determine input method: Firebase path, URL, or base64
+        input_is_url = job_input.get('input_is_url', False)
+        if isinstance(input_audio, str) and (input_audio.startswith('http://') or input_audio.startswith('https://')):
+            input_is_url = True
+        
+        # Load input audio
+        input_audio_array, input_sr = load_audio_from_input_enhanced(
+            audio_input=input_audio,
+            is_url=input_is_url,
+            storage_bucket=storage_bucket,
+            storage_path=input_storage_path
+        )
+        logger.info(f"Voice transfer: {transfer_mode} mode - Input audio: {input_sr}Hz, {len(input_audio_array)} samples")
+        
+        if transfer_mode == 'embedding':
+            # WAV to Voice Embedding mode
+            voice_name = job_input.get('voice_name')
+            voice_id = job_input.get('voice_id')
+            
+            if not voice_name and not voice_id:
+                raise ValueError("voice_name or voice_id is required for embedding mode")
+            
+            # Use optimized voice loading
+            audio_prompt_array = handle_voice_cloning_source_optimized(job_input)
+            if audio_prompt_array is not None:
+                target_audio_array = audio_prompt_array
+                target_sr = 24000  # Default sample rate for embeddings
+                logger.info(f"OPTIMIZED: Loaded target voice directly from embeddings: {len(target_audio_array)} samples")
+                
+                # Determine input source type for response info
+                input_source_type = "firebase_path" if input_storage_path else ("url" if input_is_url else "base64")
+                
+                transfer_info = {
+                    "transfer_mode": "embedding",
+                    "target_voice": voice_name or voice_id,
+                    "source": "voice_library",
+                    "voice_loading": "optimized_direct_access",
+                    "input_source": input_source_type
+                }
+                optimization_indicator = "direct_audio_array"
+            else:
+                return {
+                    "error": "Voice not found in library",
+                    "message": f"Voice '{voice_name or voice_id}' not found. Use list_local_voices operation to see available voices."
+                }
+                
+        elif transfer_mode == 'audio':
+            # WAV to WAV mode
+            target_audio = job_input.get('target_audio')
+            target_storage_path = job_input.get('target_storage_path')
+            
+            if not target_audio and not target_storage_path:
+                raise ValueError("target_audio or target_storage_path is required for audio mode")
+            
+            # Determine if target is Firebase path, URL, or base64
+            target_is_url = job_input.get('target_is_url', False)
+            if isinstance(target_audio, str) and (target_audio.startswith('http://') or target_audio.startswith('https://')):
+                target_is_url = True
+            
+            # Load target audio
+            target_audio_array, target_sr = load_audio_from_input_enhanced(
+                audio_input=target_audio,
+                is_url=target_is_url,
+                storage_bucket=storage_bucket,
+                storage_path=target_storage_path
+            )
+            logger.info(f"Using provided target audio: {target_sr}Hz, {len(target_audio_array)} samples")
+            
+            # Determine source types for response info
+            input_source_type = "firebase_path" if input_storage_path else ("url" if input_is_url else "base64")
+            target_source_type = "firebase_path" if target_storage_path else ("url" if target_is_url else "base64")
+            
+            transfer_info = {
+                "transfer_mode": "audio",
+                "target_source": "user_provided_audio",
+                "target_duration": len(target_audio_array) / target_sr,
+                "input_source": input_source_type,
+                "target_source_type": target_source_type
+            }
+            optimization_indicator = None
         
         # Process audio for S3Gen model (same logic for both modes)
         logger.info("Processing audio for voice transfer...")
@@ -591,34 +828,70 @@ def generate_voice_transfer_optimized(job_input: Dict[str, Any]) -> Dict[str, An
             except Exception as e:
                 logger.warning(f"Failed to apply watermark: {e}")
         
-        # Convert to base64 (inline utility)
-        def audio_to_base64(audio_array, sample_rate):
-            buffer = io.BytesIO()
-            sf.write(buffer, audio_array, sample_rate, format='WAV')
-            buffer.seek(0)
-            audio_b64 = base64.b64encode(buffer.read()).decode('utf-8')
-            return audio_b64
-        
-        transferred_audio_b64 = audio_to_base64(transferred_wav, S3GEN_SR)
-        
         # Calculate durations
         input_duration = len(input_audio_array) / input_sr
         output_duration = len(transferred_wav) / S3GEN_SR
         
         logger.info(f"Voice transfer completed successfully. Duration: {output_duration:.2f}s")
         
-        # Prepare response
-        response = {
-            "audio": transferred_audio_b64,
-            "sample_rate": S3GEN_SR,
-            "duration": output_duration,
-            "format": "wav",
-            "model": "s3gen",
-            "operation": "voice_transfer",
-            "transfer_info": transfer_info,
-            "input_duration": input_duration,
-            "processing_time": "30-90 seconds typical"
-        }
+        # Check if output should be uploaded to Firebase Storage
+        output_storage_path = job_input.get('output_storage_path')
+        return_download_url = job_input.get('return_download_url', False)
+        
+        if output_storage_path and storage_bucket:
+            # Upload to Firebase Storage and return download URL
+            try:
+                download_url = upload_audio_to_firebase(
+                    audio_array=transferred_wav,
+                    sample_rate=S3GEN_SR,
+                    storage_bucket=storage_bucket,
+                    storage_path=output_storage_path
+                )
+                
+                # Prepare response with download URL instead of base64
+                response = {
+                    "download_url": download_url,
+                    "output_storage_path": output_storage_path,
+                    "sample_rate": S3GEN_SR,
+                    "duration": output_duration,
+                    "format": "wav",
+                    "model": "s3gen",
+                    "operation": "voice_transfer",
+                    "transfer_info": transfer_info,
+                    "input_duration": input_duration,
+                    "processing_time": "30-90 seconds typical",
+                    "output_method": "firebase_storage"
+                }
+                
+            except Exception as e:
+                logger.warning(f"Failed to upload to Firebase Storage: {e}, falling back to base64")
+                # Fall back to base64 if upload fails
+                return_download_url = False
+        
+        if not return_download_url:
+            # Convert to base64 (original method)
+            def audio_to_base64(audio_array, sample_rate):
+                buffer = io.BytesIO()
+                sf.write(buffer, audio_array, sample_rate, format='WAV')
+                buffer.seek(0)
+                audio_b64 = base64.b64encode(buffer.read()).decode('utf-8')
+                return audio_b64
+            
+            transferred_audio_b64 = audio_to_base64(transferred_wav, S3GEN_SR)
+            
+            # Prepare response with base64 audio
+            response = {
+                "audio": transferred_audio_b64,
+                "sample_rate": S3GEN_SR,
+                "duration": output_duration,
+                "format": "wav",
+                "model": "s3gen",
+                "operation": "voice_transfer",
+                "transfer_info": transfer_info,
+                "input_duration": input_duration,
+                "processing_time": "30-90 seconds typical",
+                "output_method": "base64"
+            }
         
         # Add optimization indicator for embedding mode
         if optimization_indicator:

@@ -638,8 +638,10 @@ def upload_audio_to_firebase(audio_array, sample_rate, storage_bucket, storage_p
         try:
             # Prepare Firebase Storage upload URL
             import urllib.parse
-            encoded_path = urllib.parse.quote(storage_path, safe='/')
+            # URL encode the storage path properly for Firebase Storage
+            encoded_path = urllib.parse.quote(storage_path, safe='')
             upload_url = f"https://firebasestorage.googleapis.com/v0/b/{storage_bucket}/o/{encoded_path}"
+            logger.info(f"Firebase upload URL: {upload_url}")
             
             # Read file data
             with open(temp_path, 'rb') as f:
@@ -870,28 +872,28 @@ def generate_voice_transfer_optimized(job_input: Dict[str, Any]) -> Dict[str, An
         
         if not return_download_url:
             # Convert to base64 (original method)
-            def audio_to_base64(audio_array, sample_rate):
-                buffer = io.BytesIO()
-                sf.write(buffer, audio_array, sample_rate, format='WAV')
-                buffer.seek(0)
-                audio_b64 = base64.b64encode(buffer.read()).decode('utf-8')
-                return audio_b64
-            
-            transferred_audio_b64 = audio_to_base64(transferred_wav, S3GEN_SR)
-            
+        def audio_to_base64(audio_array, sample_rate):
+            buffer = io.BytesIO()
+            sf.write(buffer, audio_array, sample_rate, format='WAV')
+            buffer.seek(0)
+            audio_b64 = base64.b64encode(buffer.read()).decode('utf-8')
+            return audio_b64
+        
+        transferred_audio_b64 = audio_to_base64(transferred_wav, S3GEN_SR)
+        
             # Prepare response with base64 audio
-            response = {
-                "audio": transferred_audio_b64,
-                "sample_rate": S3GEN_SR,
-                "duration": output_duration,
-                "format": "wav",
-                "model": "s3gen",
-                "operation": "voice_transfer",
-                "transfer_info": transfer_info,
-                "input_duration": input_duration,
+        response = {
+            "audio": transferred_audio_b64,
+            "sample_rate": S3GEN_SR,
+            "duration": output_duration,
+            "format": "wav",
+            "model": "s3gen",
+            "operation": "voice_transfer",
+            "transfer_info": transfer_info,
+            "input_duration": input_duration,
                 "processing_time": "30-90 seconds typical",
                 "output_method": "base64"
-            }
+        }
         
         # Add optimization indicator for embedding mode
         if optimization_indicator:

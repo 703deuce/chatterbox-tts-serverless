@@ -42,7 +42,8 @@ class OptimizedVoiceLibrary:
             # Check if embeddings directory exists
             if not self.embeddings_dir.exists():
                 logger.warning(f"Voice embeddings directory not found: {self.embeddings_dir}")
-                return
+                # Create directory if it doesn't exist (for RunPod Serverless)
+                self.embeddings_dir.mkdir(parents=True, exist_ok=True)
             
             # Load voice catalog
             catalog_file = self.embeddings_dir / "voice_catalog.json"
@@ -50,6 +51,9 @@ class OptimizedVoiceLibrary:
                 with open(catalog_file, 'r') as f:
                     self.voice_catalog = json.load(f)
                 logger.info(f"Loaded {len(self.voice_catalog)} voices from catalog")
+            else:
+                logger.warning(f"Voice catalog not found: {catalog_file}")
+                # Start with empty catalog - voices can be added dynamically via API
             
             # Load quick index
             index_file = self.embeddings_dir / "quick_index.json"
@@ -74,9 +78,43 @@ class OptimizedVoiceLibrary:
         except Exception as e:
             logger.error(f"Failed to load voice library: {e}")
     
+    def add_voice_to_catalog(self, voice_metadata: Dict[str, Any]):
+        """
+        Add a voice to the catalog dynamically (for RunPod Serverless)
+        
+        This allows adding voices from external apps without rebuilding the Docker image.
+        The voice metadata should include firebase_storage_path and firebase_storage_bucket.
+        
+        Args:
+            voice_metadata: Voice metadata dictionary with voice_id, speaker_name, etc.
+        """
+        try:
+            voice_id = voice_metadata.get('voice_id')
+            if not voice_id:
+                logger.error("voice_id is required in voice_metadata")
+                return False
+            
+            # Add to catalog
+            self.voice_catalog[voice_id] = voice_metadata
+            
+            # Update name mapping if speaker_name is provided
+            speaker_name = voice_metadata.get('speaker_name')
+            if speaker_name:
+                self.name_mapping[speaker_name] = voice_id
+            
+            logger.info(f"Added voice {voice_id} ({speaker_name}) to catalog")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Failed to add voice to catalog: {e}")
+            return False
+    
     def get_voice_audio_direct(self, voice_id: str) -> Optional[np.ndarray]:
         """
-        OPTIMIZED: Get voice audio array directly without file I/O overhead
+        OPTIMIZED: Get voice audio array with Firebase Storage fallback for RunPod Serverless
+        
+        Supports ephemeral filesystem by downloading from Firebase Storage when local file
+        doesn't exist. Perfect for RunPod Serverless workers.
         
         Args:
             voice_id: Voice identifier
@@ -85,14 +123,14 @@ class OptimizedVoiceLibrary:
             Audio array ready for direct use with OptimizedChatterboxTTS
         """
         try:
-            # Check cache first
+            # Check cache first (in-memory, persists during worker lifetime)
             if voice_id in self._audio_cache:
                 logger.debug(f"Cache hit for voice {voice_id}")
                 return self._audio_cache[voice_id]
             
-            # Check if voice exists
+            # Check if voice exists in catalog
             if voice_id not in self.voice_catalog:
-                logger.error(f"Voice not found: {voice_id}")
+                logger.error(f"Voice not found in catalog: {voice_id}")
                 return None
             
             voice_info = self.voice_catalog[voice_id]
@@ -107,13 +145,18 @@ class OptimizedVoiceLibrary:
             embedding_path = embedding_path.replace('\\', '/')
             embedding_file = self.embeddings_dir / embedding_path
             
-            # Load audio directly
-            if not embedding_file.exists():
-                logger.error(f"Embedding file not found: {embedding_file}")
-                return None
-            
-            with gzip.open(embedding_file, 'rb') as f:
-                embedding_data = pickle.load(f)
+            # Try to load from local filesystem first (for built-in voices in Docker image)
+            if embedding_file.exists():
+                logger.info(f"Loading embedding from local filesystem: {voice_id}")
+                with gzip.open(embedding_file, 'rb') as f:
+                    embedding_data = pickle.load(f)
+            else:
+                # Local file doesn't exist - download from Firebase Storage
+                logger.info(f"Local file not found, downloading from Firebase Storage: {voice_id}")
+                embedding_data = self._download_embedding_from_firebase(voice_info, voice_id)
+                if embedding_data is None:
+                    logger.error(f"Failed to download embedding from Firebase: {voice_id}")
+                    return None
             
             # Extract audio array
             if isinstance(embedding_data, dict) and 'audio' in embedding_data:
@@ -124,14 +167,82 @@ class OptimizedVoiceLibrary:
                 logger.error(f"Unknown embedding format for voice {voice_id}")
                 return None
             
-            # Cache management
+            # Cache in memory (not filesystem - works with ephemeral storage)
             self._manage_cache(voice_id, audio_array)
             
-            logger.info(f"Loaded voice {voice_id} directly: {audio_array.shape} samples")
+            logger.info(f"Loaded voice {voice_id}: {audio_array.shape} samples")
             return audio_array
             
         except Exception as e:
             logger.error(f"Failed to load voice {voice_id}: {e}")
+            import traceback
+            logger.error(traceback.format_exc())
+            return None
+    
+    def _download_embedding_from_firebase(self, voice_info: Dict[str, Any], voice_id: str) -> Optional[Any]:
+        """
+        Download embedding file from Firebase Storage for RunPod Serverless
+        
+        Uses temp file that's cleaned up after loading. Works with ephemeral filesystem.
+        
+        Args:
+            voice_info: Voice metadata dictionary
+            voice_id: Voice identifier
+            
+        Returns:
+            Embedding data (dict or np.ndarray) or None if download fails
+        """
+        try:
+            import tempfile
+            import os
+            import urllib.request
+            import urllib.parse
+            
+            # Get Firebase Storage path from metadata
+            storage_bucket = voice_info.get('firebase_storage_bucket', 'aitts-d4c6d.firebasestorage.app')
+            storage_path = voice_info.get('firebase_storage_path')
+            
+            if not storage_path:
+                # Construct default path if not specified
+                storage_path = f"voices/embeddings/{voice_id}.pkl.gz"
+                logger.info(f"No firebase_storage_path in metadata, using default: {storage_path}")
+            
+            # Construct Firebase download URL (reuse existing function if available)
+            try:
+                # Try to import from handler if available
+                from handler import construct_firebase_url
+                firebase_url = construct_firebase_url(storage_bucket, storage_path)
+            except ImportError:
+                # Fallback: construct URL manually
+                encoded_path = urllib.parse.quote(storage_path, safe='/')
+                firebase_url = f"https://firebasestorage.googleapis.com/v0/b/{storage_bucket}/o/{encoded_path}?alt=media"
+            
+            logger.info(f"Downloading embedding from Firebase: {firebase_url}")
+            
+            # Download to temporary file (ephemeral - cleaned up after use)
+            temp_file = tempfile.mktemp(suffix='.pkl.gz')
+            
+            try:
+                # Download the file
+                urllib.request.urlretrieve(firebase_url, temp_file)
+                
+                # Load embedding data from temp file
+                with gzip.open(temp_file, 'rb') as f:
+                    embedding_data = pickle.load(f)
+                
+                logger.info(f"Successfully downloaded and loaded embedding from Firebase: {voice_id}")
+                return embedding_data
+                
+            finally:
+                # Always clean up temp file (important for RunPod Serverless)
+                if os.path.exists(temp_file):
+                    os.unlink(temp_file)
+                    logger.debug(f"Cleaned up temp file: {temp_file}")
+        
+        except Exception as e:
+            logger.error(f"Failed to download embedding from Firebase: {e}")
+            import traceback
+            logger.error(traceback.format_exc())
             return None
     
     def get_voice_audio_by_name_direct(self, voice_name: str) -> Optional[np.ndarray]:

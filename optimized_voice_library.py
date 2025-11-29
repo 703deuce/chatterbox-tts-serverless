@@ -131,6 +131,7 @@ class OptimizedVoiceLibrary:
             # Check if voice exists in catalog
             if voice_id not in self.voice_catalog:
                 logger.error(f"Voice not found in catalog: {voice_id}")
+                logger.error(f"Available voices in catalog: {list(self.voice_catalog.keys())[:10]}")  # Show first 10
                 return None
             
             voice_info = self.voice_catalog[voice_id]
@@ -197,25 +198,39 @@ class OptimizedVoiceLibrary:
             import os
             import urllib.request
             import urllib.parse
+            import urllib.error
             
             # Get Firebase Storage path from metadata
             storage_bucket = voice_info.get('firebase_storage_bucket', 'aitts-d4c6d.firebasestorage.app')
             storage_path = voice_info.get('firebase_storage_path')
             
-            if not storage_path:
+            # Also check for direct download URL (alternative format)
+            download_url = voice_info.get('firebase_download_url')
+            
+            if download_url:
+                # Use direct download URL if provided
+                firebase_url = download_url
+                logger.info(f"Using direct download URL from metadata: {firebase_url}")
+            elif storage_path:
+                # Construct Firebase download URL (reuse existing function if available)
+                try:
+                    # Try to import from handler if available
+                    from handler import construct_firebase_url
+                    firebase_url = construct_firebase_url(storage_bucket, storage_path)
+                except ImportError:
+                    # Fallback: construct URL manually
+                    encoded_path = urllib.parse.quote(storage_path, safe='/')
+                    firebase_url = f"https://firebasestorage.googleapis.com/v0/b/{storage_bucket}/o/{encoded_path}?alt=media"
+            else:
                 # Construct default path if not specified
                 storage_path = f"voices/embeddings/{voice_id}.pkl.gz"
-                logger.info(f"No firebase_storage_path in metadata, using default: {storage_path}")
-            
-            # Construct Firebase download URL (reuse existing function if available)
-            try:
-                # Try to import from handler if available
-                from handler import construct_firebase_url
-                firebase_url = construct_firebase_url(storage_bucket, storage_path)
-            except ImportError:
-                # Fallback: construct URL manually
-                encoded_path = urllib.parse.quote(storage_path, safe='/')
-                firebase_url = f"https://firebasestorage.googleapis.com/v0/b/{storage_bucket}/o/{encoded_path}?alt=media"
+                logger.warning(f"No firebase_storage_path or firebase_download_url in metadata, using default: {storage_path}")
+                try:
+                    from handler import construct_firebase_url
+                    firebase_url = construct_firebase_url(storage_bucket, storage_path)
+                except ImportError:
+                    encoded_path = urllib.parse.quote(storage_path, safe='/')
+                    firebase_url = f"https://firebasestorage.googleapis.com/v0/b/{storage_bucket}/o/{encoded_path}?alt=media"
             
             logger.info(f"Downloading embedding from Firebase: {firebase_url}")
             
@@ -223,8 +238,22 @@ class OptimizedVoiceLibrary:
             temp_file = tempfile.mktemp(suffix='.pkl.gz')
             
             try:
-                # Download the file
-                urllib.request.urlretrieve(firebase_url, temp_file)
+                # Download the file with error handling
+                try:
+                    urllib.request.urlretrieve(firebase_url, temp_file)
+                except urllib.error.HTTPError as e:
+                    logger.error(f"HTTP error downloading from Firebase: {e.code} - {e.reason}")
+                    if e.code == 404:
+                        logger.error(f"File not found at Firebase path: {storage_path or download_url}")
+                    return None
+                except urllib.error.URLError as e:
+                    logger.error(f"URL error downloading from Firebase: {e.reason}")
+                    return None
+                
+                # Verify file was downloaded
+                if not os.path.exists(temp_file) or os.path.getsize(temp_file) == 0:
+                    logger.error(f"Downloaded file is empty or doesn't exist: {temp_file}")
+                    return None
                 
                 # Load embedding data from temp file
                 with gzip.open(temp_file, 'rb') as f:

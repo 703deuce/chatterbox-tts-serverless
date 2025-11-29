@@ -106,22 +106,81 @@ def handle_voice_cloning_source_optimized(job_input: Dict[str, Any]) -> Optional
     """
     OPTIMIZED: Handle voice cloning source and return audio array directly
     This eliminates the temp file creation step
+    
+    Supports:
+    - voice_id: Load from local filesystem or Firebase Storage
+    - voice_name: Load from local filesystem or Firebase Storage
+    - reference_audio: Direct base64 audio
+    - voice_metadata: Add new voice to catalog dynamically (for RunPod Serverless)
     """
     try:
         voice_id = job_input.get('voice_id')
         voice_name = job_input.get('voice_name')
         reference_audio_b64 = job_input.get('reference_audio')
+        voice_metadata = job_input.get('voice_metadata')  # NEW: For dynamic voice addition
         max_reference_duration_sec = job_input.get('max_reference_duration_sec', 30)
+        
+        # NEW: Option 0: Add voice metadata dynamically (for RunPod Serverless)
+        # This MUST happen first so the voice is in the catalog before we try to load it
+        # This allows using embeddings without pre-existing catalog entries
+        logger.info(f"DEBUG: voice_metadata present: {voice_metadata is not None}")
+        if voice_metadata:
+            logger.info(f"DEBUG: voice_metadata keys: {list(voice_metadata.keys()) if isinstance(voice_metadata, dict) else 'not a dict'}")
+            logger.info(f"DEBUG: voice_metadata voice_id: {voice_metadata.get('voice_id') if isinstance(voice_metadata, dict) else 'N/A'}")
+            logger.info(f"DEBUG: voice_metadata firebase_storage_path: {voice_metadata.get('firebase_storage_path') if isinstance(voice_metadata, dict) else 'N/A'}")
+        
+        if voice_metadata and optimized_voice_library:
+            logger.info("Adding voice metadata to catalog dynamically")
+            if optimized_voice_library.add_voice_to_catalog(voice_metadata):
+                # Extract voice_id from metadata if not already provided
+                if not voice_id:
+                    voice_id = voice_metadata.get('voice_id')
+                if not voice_name and voice_metadata.get('speaker_name'):
+                    voice_name = voice_metadata.get('speaker_name')
+                logger.info(f"Voice {voice_id} added to catalog from metadata, now loading...")
+            else:
+                logger.warning("Failed to add voice metadata to catalog")
+                # Still try to extract voice_id for error message
+                if not voice_id:
+                    voice_id = voice_metadata.get('voice_id')
+        elif voice_metadata:
+            logger.warning(f"voice_metadata provided but optimized_voice_library not available: {optimized_voice_library is None}")
         
         # Option 1: Use voice from optimized embeddings by ID
         if voice_id:
-            if optimized_voice_library and optimized_voice_library.is_available():
+            logger.info(f"DEBUG: Looking for voice_id: {voice_id}")
+            logger.info(f"DEBUG: optimized_voice_library available: {optimized_voice_library is not None}")
+            if optimized_voice_library:
+                logger.info(f"DEBUG: Catalog has {len(optimized_voice_library.voice_catalog)} voices")
+                logger.info(f"DEBUG: Voice in catalog: {voice_id in optimized_voice_library.voice_catalog}")
+                
+                # Double-check: if voice still not in catalog, try to add from metadata again
+                if voice_id not in optimized_voice_library.voice_catalog:
+                    logger.warning(f"Voice {voice_id} not in catalog, checking voice_metadata...")
+                    if voice_metadata and voice_metadata.get('voice_id') == voice_id:
+                        logger.info(f"Voice {voice_id} not in catalog, adding from metadata...")
+                        if optimized_voice_library.add_voice_to_catalog(voice_metadata):
+                            logger.info(f"Successfully added voice {voice_id} to catalog")
+                        else:
+                            logger.error(f"Failed to add voice {voice_id} to catalog")
+                    else:
+                        logger.error(f"voice_metadata check failed: voice_metadata={voice_metadata is not None}, voice_id match={voice_metadata.get('voice_id') == voice_id if voice_metadata else False}")
+                        raise ValueError(
+                            f"Voice ID '{voice_id}' not found in catalog and no voice_metadata provided. "
+                            f"Please include voice_metadata with firebase_storage_path in your request."
+                        )
+                
+                logger.info(f"DEBUG: Attempting to load voice {voice_id} from catalog...")
                 audio_array = optimized_voice_library.get_voice_audio_direct(voice_id)
                 if audio_array is not None:
                     logger.info(f"Using voice from optimized embeddings: {voice_id} (DIRECT)")
                     return audio_array
                 else:
-                    raise ValueError(f"Voice ID '{voice_id}' not found in optimized embeddings")
+                    logger.error(f"Failed to load voice {voice_id} - get_voice_audio_direct returned None")
+                    raise ValueError(
+                        f"Voice ID '{voice_id}' found in catalog but failed to load. "
+                        f"Check that firebase_storage_path is correct and file is accessible."
+                    )
             else:
                 raise ValueError("Optimized voice library not available")
         
